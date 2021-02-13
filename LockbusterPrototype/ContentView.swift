@@ -53,14 +53,17 @@ struct NamedGesture {
     let gesture: Any
 }
 
+// Notes for next time:
+// duplicate gesture bug was caused by updating gesture name in the onAppear of the lock views in createLock, which would trigger a refresh of the view and therefore might create another lock.
+// figure out a way to still update the lock name but not in that specific way
+
 struct ContentView: View {
     @State var started: Bool = false
-    @State var timeLeft: Float = 60.0
     @State var currentLock = 1
     @State var currentGesture: NamedGesture = NamedGesture(gestureName: "Tap", gesture: TapGesture())
     @State var currentGestureName: String = "Double Tap"
     @State var currentGestureDone = false
-    var isAnimating = false
+    
     var body: some View {
         return VStack {
             if !started {  // "welcome screen"
@@ -90,51 +93,10 @@ struct ContentView: View {
         return ImageAnimated(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: 1, lock: currentLock)
             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
             .onAppear(perform: {
-                DispatchQueue.main.asyncAfter(deadline: .now()+0.7, execute: {self.currentLock = Int.random(in: 1...5); self.currentGestureDone = false})
+                print("finished animating");
+                DispatchQueue.main.asyncAfter(deadline: .now()+0.6, execute: {print("dispatch running"); self.currentLock = Int.random(in: 1...5); self.currentGestureDone = false})
             })
     }
-    
-    /*
-    func showLock() -> some View {
-        //self.currentLock = Int.random(in: 1...5)
-        if self.currentGesture.gestureName.contains("Two") {
-            let g = self.currentGesture.gesture as! SimultaneousGesture<TapGesture, TapGesture>
-            return AnyView(Image("G1L\(self.currentLock)F1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                .gesture(g))
-        } else if self.currentGesture.gestureName.contains("Three") {
-            let g = self.currentGesture.gesture as! SimultaneousGesture<SimultaneousGesture<TapGesture, TapGesture>, TapGesture>
-            return AnyView(Image("G1L\(self.currentLock)F1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                .gesture(g))
-        } else if self.currentGesture.gestureName.contains("Tap") {
-            let g = self.currentGesture.gesture as! TapGesture
-            return AnyView(Image("G1L\(self.currentLock)F1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                .gesture(g))
-        } else if self.currentGesture.gestureName.contains("Pinch") {
-            let g = self.currentGesture.gesture as! MagnificationGesture
-            return AnyView(Image("G1L\(self.currentLock)F1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                .gesture(g))
-        } else {
-            let g = self.currentGesture.gesture as! RotationGesture
-            return AnyView(Image("G1L\(self.currentLock)F1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                .gesture(g))
-        }
-    }
-    */
     
     func createLock() -> some View {
         print("creating lock")
@@ -148,9 +110,8 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .gesture(TapGesture(count: 2).onEnded{self.currentGestureDone = true; print("2t")})
                             .onAppear(perform: {
-                                self.currentGestureName = "Double Tap"
+                                print("2t name changed")
                             })
-                            .animation(.easeInOut)
             )
         } else {
             print("chosen 3t")
@@ -161,27 +122,12 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .gesture(TapGesture(count: 3).onEnded{self.currentGestureDone = true; print("3t")})
                             .onAppear(perform: {
-                                self.currentGestureName = "Triple Tap"
+                                print("3t name changed")
                             })
-                            .animation(.easeInOut)
             )
         }
         
     }
-    
-    /*
-    func chooseGesture() -> NamedGesture {
-        let possibleGestures = [
-            NamedGesture(gestureName: "Double Tap", gesture: TapGesture(count: 2).onEnded {self.currentGestureDone = true; print("2t")} ),
-            NamedGesture(gestureName: "Rotate", gesture: RotationGesture().onEnded {_ in self.currentGestureDone = true; print("r")} ),
-            NamedGesture(gestureName: "Pinch", gesture: MagnificationGesture().onEnded {_ in self.currentGestureDone = true; print("p")} ),
-            NamedGesture(gestureName: "Triple Tap", gesture: TapGesture(count: 3).onEnded {self.currentGestureDone = true; print("3t")} ),
-            NamedGesture(gestureName: "Two Finger Tap", gesture: SimultaneousGesture(TapGesture(count: 1), TapGesture(count: 1)).onEnded {_ in self.currentGestureDone = true; print("2ft")} ),
-            NamedGesture(gestureName: "Three Finger Tap", gesture: SimultaneousGesture(SimultaneousGesture(TapGesture(count: 1), TapGesture(count: 1)), TapGesture(count: 1)).onEnded {_ in self.currentGestureDone = true; print("3ft")} )
-        ]
-        return possibleGestures[Int.random(in: 0...5)]
-    }
-    */
     
 }
 
