@@ -47,20 +47,14 @@ struct ImageAnimated: UIViewRepresentable {
     }
 }
 
+// Notes for next session:
+// duplicate gesture bug solved; now fix minor graphical issue of image jumping upwards when animating
 
-struct NamedGesture {
-    let gestureName: String
-    let gesture: Any
-}
-
-// Notes for next time:
-// duplicate gesture bug was caused by updating gesture name in the onAppear of the lock views in createLock, which would trigger a refresh of the view and therefore might create another lock.
-// figure out a way to still update the lock name but not in that specific way
+var name = ""
 
 struct ContentView: View {
     @State var started: Bool = false
     @State var currentLock = 1
-    @State var currentGesture: NamedGesture = NamedGesture(gestureName: "Tap", gesture: TapGesture())
     @State var currentGestureName: String = "Double Tap"
     @State var currentGestureDone = false
     
@@ -74,8 +68,8 @@ struct ContentView: View {
                 })
             }
             else {
-                //Text(currentGesture.gestureName).padding(.bottom).scaleEffect(2)
-                Text(currentGestureName).padding(.bottom).scaleEffect(2)
+                //Text(currentGestureName).padding(.bottom).scaleEffect(2)
+                //Text(name).padding(.bottom).scaleEffect(2)
                 if currentGestureDone {
                     animateLock()
                 }
@@ -103,32 +97,55 @@ struct ContentView: View {
         let num = Int.random(in: 1...2)
         if num == 1 {
             print("chosen 2t")
+            name = "Double Tap"
             //self.currentGestureName = "Double Tap"
-            return AnyView(Image("G1L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .gesture(TapGesture(count: 2).onEnded{self.currentGestureDone = true; print("2t")})
-                            .onAppear(perform: {
-                                print("2t name changed")
-                            })
+            return AnyView(
+                VStack {
+                    Text(name).scaleEffect(2)
+                    Image("G1L\(self.currentLock)F1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        .gesture(TapGesture(count: 2).onEnded{self.currentGestureDone = true; print("2t")})
+                        .onAppear(perform: { print("2t name changed") })
+                }
             )
+//            return AnyView(Image("G1L\(self.currentLock)F1")
+//                .resizable()
+//                .aspectRatio(contentMode: .fill)
+//                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+//                .gesture(TapGesture(count: 2).onEnded{self.currentGestureDone = true; print("2t")})
+//                .onAppear(perform: {
+//                    print("2t name changed")
+//                })
+//            )
         } else {
             print("chosen 3t")
+            name = "Triple Tap"
             //self.currentGestureName = "Triple Tap"
-            return AnyView(Image("G1L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .gesture(TapGesture(count: 3).onEnded{self.currentGestureDone = true; print("3t")})
-                            .onAppear(perform: {
-                                print("3t name changed")
-                            })
+            return AnyView(
+                VStack {
+                    Text(name).padding(.bottom).scaleEffect(2)
+                    Image("G1L\(self.currentLock)F1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        .gesture(TapGesture(count: 3).onEnded{self.currentGestureDone = true; print("3t")})
+                        .onAppear(perform: { print("3t name changed") })
+                }
             )
+//
+//            return AnyView(Image("G1L\(self.currentLock)F1")
+//                .resizable()
+//                .aspectRatio(contentMode: .fill)
+//                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+//                .gesture(TapGesture(count: 3).onEnded{self.currentGestureDone = true; print("3t")})
+//                .onAppear(perform: {
+//                    print("3t name changed")
+//                })
+//            )
         }
-        
     }
-    
 }
 
 
