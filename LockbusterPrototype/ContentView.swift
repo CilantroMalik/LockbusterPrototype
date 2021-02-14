@@ -47,15 +47,47 @@ struct ImageAnimated: UIViewRepresentable {
     }
 }
 
-// Notes for next session:
-// duplicate gesture bug solved; now fix minor graphical issue of image jumping upwards when animating
+struct TappableView:UIViewRepresentable {
+    var tappedCallback: ((CGPoint, Int) -> Void)
+    
+    func makeUIView(context: UIViewRepresentableContext<TappableView>) -> UIView {
+        let v = UIView(frame: .zero)
+        let gesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped))
+        gesture.numberOfTapsRequired = 1
+        gesture.numberOfTouchesRequired = 2
+        v.addGestureRecognizer(gesture)
+        return v
+    }
+    
+    class Coordinator: NSObject {
+        var tappedCallback: ((CGPoint, Int) -> Void)
+        init(tappedCallback: @escaping ((CGPoint, Int) -> Void)) {
+            self.tappedCallback = tappedCallback
+        }
+        @objc func tapped(gesture:UITapGestureRecognizer) {
+            let point = gesture.location(in: gesture.view)
+            self.tappedCallback(point, 1)
+        }
+    }
+    
+    func makeCoordinator() -> TappableView.Coordinator {
+        return Coordinator(tappedCallback:self.tappedCallback)
+    }
+    
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<TappableView>) {
+    }
+    
+}
 
-var name = ""
+// Notes for next session:
+// move into directional gestures (single- and multi-finger swipes)
+
+var gestureName = ""
+
 
 struct ContentView: View {
-    @State var started: Bool = false
+    @State var started: Bool = true
     @State var currentLock = 1
-    @State var currentGestureName: String = "Double Tap"
     @State var currentGestureDone = false
     
     var body: some View {
@@ -68,8 +100,6 @@ struct ContentView: View {
                 })
             }
             else {
-                //Text(currentGestureName).padding(.bottom).scaleEffect(2)
-                //Text(name).padding(.bottom).scaleEffect(2)
                 if currentGestureDone {
                     animateLock()
                 }
@@ -81,27 +111,30 @@ struct ContentView: View {
     }
     
     func animateLock() -> some View {
-        //self.currentGesture = chooseGesture()
         print("animating lock")
-        // self.currentGestureDone = false
-        return ImageAnimated(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: 1, lock: currentLock)
-            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-            .onAppear(perform: {
-                print("finished animating");
-                DispatchQueue.main.asyncAfter(deadline: .now()+0.6, execute: {print("dispatch running"); self.currentLock = Int.random(in: 1...5); self.currentGestureDone = false})
-            })
+        return AnyView(
+            VStack {
+                Text("a").scaleEffect(2).foregroundColor(.white)
+                ImageAnimated(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: 1, lock: currentLock)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                .aspectRatio(contentMode: .fill)
+                .onAppear(perform: {
+                    print("finished animating");
+                    DispatchQueue.main.asyncAfter(deadline: .now()+0.6, execute: {print("dispatch running"); self.currentLock = Int.random(in: 1...5); self.currentGestureDone = false})
+                })
+            }
+        )
     }
     
     func createLock() -> some View {
         print("creating lock")
-        let num = Int.random(in: 1...2)
+        let num = Int.random(in: 1...5)
         if num == 1 {
             print("chosen 2t")
-            name = "Double Tap"
-            //self.currentGestureName = "Double Tap"
+            gestureName = "Double Tap"
             return AnyView(
                 VStack {
-                    Text(name).scaleEffect(2)
+                    Text(gestureName).scaleEffect(2)
                     Image("G1L\(self.currentLock)F1")
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -110,22 +143,12 @@ struct ContentView: View {
                         .onAppear(perform: { print("2t name changed") })
                 }
             )
-//            return AnyView(Image("G1L\(self.currentLock)F1")
-//                .resizable()
-//                .aspectRatio(contentMode: .fill)
-//                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-//                .gesture(TapGesture(count: 2).onEnded{self.currentGestureDone = true; print("2t")})
-//                .onAppear(perform: {
-//                    print("2t name changed")
-//                })
-//            )
-        } else {
+        } else if num == 2 {
             print("chosen 3t")
-            name = "Triple Tap"
-            //self.currentGestureName = "Triple Tap"
+            gestureName = "Triple Tap"
             return AnyView(
                 VStack {
-                    Text(name).padding(.bottom).scaleEffect(2)
+                    Text(gestureName).scaleEffect(2)
                     Image("G1L\(self.currentLock)F1")
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -134,16 +157,53 @@ struct ContentView: View {
                         .onAppear(perform: { print("3t name changed") })
                 }
             )
-//
-//            return AnyView(Image("G1L\(self.currentLock)F1")
-//                .resizable()
-//                .aspectRatio(contentMode: .fill)
-//                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-//                .gesture(TapGesture(count: 3).onEnded{self.currentGestureDone = true; print("3t")})
-//                .onAppear(perform: {
-//                    print("3t name changed")
-//                })
-//            )
+        } else if num == 3 {
+            print("chosen rot")
+            gestureName = "Rotate"
+            return AnyView(
+                VStack {
+                    Text(gestureName).scaleEffect(2)
+                    Image("G1L\(self.currentLock)F1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        .gesture(RotationGesture().onEnded{_ in self.currentGestureDone = true; print("rot")})
+                        .onAppear(perform: { print("rot name changed") })
+                }
+            )
+        } else if num == 4 {
+            print("chosen mag")
+            gestureName = "Pinch"
+            return AnyView(
+                VStack {
+                    Text(gestureName).scaleEffect(2)
+                    Image("G1L\(self.currentLock)F1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        .gesture(MagnificationGesture().onEnded{_ in self.currentGestureDone = true; print("mag")})
+                        .onAppear(perform: { print("mag name changed") })
+                }
+            )
+        } else {
+            print("chosen 2ft")
+            gestureName = "Two Finger Tap"
+            return AnyView(
+                VStack {
+                    Text(gestureName).scaleEffect(2)
+                    ZStack {
+                        Image("G1L\(self.currentLock)F1")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                            .onAppear(perform: { print("2ft name changed") })
+                        TappableView {
+                            (location, taps) in self.currentGestureDone = true; print("2ft")
+                        }.aspectRatio(contentMode: .fill)
+                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    }
+                }
+            )
         }
     }
 }
