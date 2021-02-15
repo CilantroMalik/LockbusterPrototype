@@ -98,7 +98,7 @@ struct DraggableView: UIViewRepresentable {
         init(draggedCallback: @escaping ((CGPoint, Int) -> Void)) {
             self.draggedCallback = draggedCallback
         }
-        @objc func dragged(gesture: UITapGestureRecognizer) {
+        @objc func dragged(gesture: UISwipeGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
             self.draggedCallback(point, 1)
         }
@@ -111,11 +111,45 @@ struct DraggableView: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<DraggableView>) { }
 }
 
+struct LongPressableView: UIViewRepresentable {
+    var touches: Int
+    var pressedCallback: ((CGPoint, Int) -> Void)
+    
+    func makeUIView(context: UIViewRepresentableContext<LongPressableView>) -> UIView {
+        let v = UIView(frame: .zero)
+        let gesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pressed))
+        gesture.minimumPressDuration = 0.4
+        gesture.numberOfTouchesRequired = touches
+        v.addGestureRecognizer(gesture)
+        return v
+    }
+    
+    class Coordinator: NSObject {
+        var pressedCallback: ((CGPoint, Int) -> Void)
+        init(pressedCallback: @escaping ((CGPoint, Int) -> Void)) {
+            self.pressedCallback = pressedCallback
+        }
+        @objc func pressed(gesture: UILongPressGestureRecognizer) {
+            let point = gesture.location(in: gesture.view)
+            self.pressedCallback(point, 1)
+        }
+    }
+    
+    func makeCoordinator() -> LongPressableView.Coordinator {
+        return Coordinator(pressedCallback: self.pressedCallback)
+    }
+    
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<LongPressableView>) { }
+}
+
 // Notes for next session:
-// add timing functionality; also possibly more gestures: 2-finger long press? 3-finger swipes? edge pans?
+// possibly more gestures: 2-finger long press? 3-finger swipes? edge pans?
 
 var gestureName = ""
 var score = 0
+var startTime: TimeInterval = 0.0
+var finalTime = ""
+var previousBest = 0.0
 
 struct ContentView: View {
     @State var started: Bool = false
@@ -127,18 +161,29 @@ struct ContentView: View {
             if !started {  // "welcome screen"
                 Text("Welcome to Lockbuster!")
                 Button("Start Game", action: {
-                    print("starting game")
+                    startTime = Date.timeIntervalSinceReferenceDate
+                    print("starting game at time \(startTime)")
+                    print("current highscore is \(UserDefaults.standard.double(forKey: "hundredGesturesTime"))")
+                    previousBest = UserDefaults.standard.double(forKey: "hundredGesturesTime")
                     self.started = true
                 })
-            }
-            else {
-                if currentGestureDone {
-                    animateLock()
+            } else {
+                if finalTime == "" {
+                    if currentGestureDone { animateLock() }
+                    else { createLock() }
+                    
+                    Text("Score: \(score)")
+                } else {  // TODO work on text scaling issue
+                    Text("Finished!").scaleEffect(4).animation(.easeInOut(duration: 1.5)).padding(.bottom)
+                    Text("Time: \(finalTime)s").scaleEffect(2.25).animation(.easeInOut(duration: 2.5)).padding(.top)
+                    let currentBest = Double(finalTime)!
+                    if currentBest < previousBest {
+                        Text("New best time!").scaleEffect(1.5).padding(.top)
+                        Text(String(format: "(Improved by %.3fs)", previousBest-currentBest)).padding(.top)
+                    } else {
+                        Text(String(format: "Best time: %.3fs", previousBest)).padding(.top)
+                    }
                 }
-                else {
-                    createLock()
-                }
-                Text("Score: \(score)")
             }
         }
     }
@@ -153,7 +198,19 @@ struct ContentView: View {
                 .aspectRatio(contentMode: .fill)
                 .onAppear(perform: {
                     print("finished animating");
-                    DispatchQueue.main.asyncAfter(deadline: .now()+0.6, execute: {print("dispatch running"); self.currentLock = Int.random(in: 1...5); self.currentGestureDone = false})
+                    DispatchQueue.main.asyncAfter(deadline: .now()+0.6, execute: {
+                        print("dispatch running")
+                        if score >= 5 {  // change for easier testing; revert to 100 for production
+                            finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)
+                            let defaults = UserDefaults.standard
+                            if Double(finalTime)! < previousBest || previousBest == 0.0 {
+                                print("setting \(Double(finalTime)!); previous value \(previousBest)")
+                                defaults.set(Double(finalTime)!, forKey: "hundredGesturesTime")
+                            }
+                        }
+                        self.currentLock = Int.random(in: 1...5)
+                        self.currentGestureDone = false
+                    })
                 })
             }
         )
@@ -161,7 +218,7 @@ struct ContentView: View {
     
     func createLock() -> some View {
         print("creating lock")
-        let num = Int.random(in: 1...15)
+        let num = Int.random(in: 1...17) // change for simulator testing; revert to 17 for production
         if num == 1 {
             print("chosen 2t")
             gestureName = "Double Tap"
@@ -412,7 +469,7 @@ struct ContentView: View {
                     }
                 }
             )
-        } else {
+        } else if num == 15 {
             print("chosen lp")
             gestureName = "Long Press"
             return AnyView(
@@ -425,14 +482,51 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("lp name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                            .gesture(LongPressGesture(minimumDuration: 0.5).onEnded({_ in self.currentGestureDone = true; print("lp")}))
+                            .gesture(LongPressGesture(minimumDuration: 0.4).onEnded({_ in self.currentGestureDone = true; print("lp")}))
+                    }
+                }
+            )
+        } else if num == 16 {
+            print("chosen 2flp")
+            gestureName = "Two Finger Long Press"
+            return AnyView(
+                VStack {
+                    Text(gestureName).scaleEffect(2)
+                    ZStack {
+                        Image("G1L\(self.currentLock)F1")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                            .onAppear(perform: { print("2flp name changed") })
+                            .animation(.easeInOut(duration: 0.2))
+                        LongPressableView(touches: 2, pressedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2flp")})
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    }
+                }
+            )
+        } else {
+            print("chosen 3flp")
+            gestureName = "Three Finger Long Press"
+            return AnyView(
+                VStack {
+                    Text(gestureName).scaleEffect(2)
+                    ZStack {
+                        Image("G1L\(self.currentLock)F1")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                            .onAppear(perform: { print("3flp name changed") })
+                            .animation(.easeInOut(duration: 0.2))
+                        LongPressableView(touches: 3, pressedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2flp")})
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         }
     }
 }
-
 
 
 struct ContentView_Previews: PreviewProvider {
