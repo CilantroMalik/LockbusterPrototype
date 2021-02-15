@@ -112,10 +112,10 @@ struct DraggableView: UIViewRepresentable {
 }
 
 // Notes for next session:
-// move into directional gestures (single- and multi-finger swipes)
+// add timing functionality; also possibly more gestures: 2-finger long press? 3-finger swipes? edge pans?
 
 var gestureName = ""
-
+var score = 0
 
 struct ContentView: View {
     @State var started: Bool = false
@@ -138,6 +138,7 @@ struct ContentView: View {
                 else {
                     createLock()
                 }
+                Text("Score: \(score)")
             }
         }
     }
@@ -171,7 +172,7 @@ struct ContentView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(TapGesture(count: 2).onEnded{self.currentGestureDone = true; print("2t")})
+                        .gesture(TapGesture(count: 2).onEnded{score += 1; self.currentGestureDone = true; print("2t")})
                         .onAppear(perform: { print("2t name changed") })
                         .animation(.easeInOut(duration: 0.2))
                 }
@@ -186,7 +187,7 @@ struct ContentView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(TapGesture(count: 3).onEnded{self.currentGestureDone = true; print("3t")})
+                        .gesture(TapGesture(count: 3).onEnded{score += 1; self.currentGestureDone = true; print("3t")})
                         .onAppear(perform: { print("3t name changed") })
                         .animation(.easeInOut(duration: 0.2))
                 }
@@ -201,7 +202,7 @@ struct ContentView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(RotationGesture().onEnded{_ in self.currentGestureDone = true; print("rot")})
+                        .gesture(RotationGesture().onEnded{_ in score += 1; self.currentGestureDone = true; print("rot")})
                         .onAppear(perform: { print("rot name changed") })
                         .animation(.easeInOut(duration: 0.2))
                 }
@@ -216,7 +217,7 @@ struct ContentView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(MagnificationGesture().onEnded{_ in self.currentGestureDone = true; print("mag")})
+                        .gesture(MagnificationGesture().onEnded{_ in score += 1; self.currentGestureDone = true; print("mag")})
                         .onAppear(perform: { print("mag name changed") })
                         .animation(.easeInOut(duration: 0.2))
                 }
@@ -234,7 +235,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("2ft name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        TappableView(touches: 2, tappedCallback: {(location, taps) in self.currentGestureDone = true; print("2ft")})
+                        TappableView(touches: 2, tappedCallback: {(_, _) in score += 1; self.currentGestureDone = true; print("2ft")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -253,7 +254,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("3ft name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        TappableView(touches: 3, tappedCallback: {(location, taps) in self.currentGestureDone = true; print("3ft")})
+                        TappableView(touches: 3, tappedCallback: {(_, _) in score += 1; self.currentGestureDone = true; print("3ft")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -272,7 +273,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("ls name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .left, touches: 1, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("ls")})
+                        DraggableView(direction: .left, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("ls")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -291,7 +292,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("rs name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .right, touches: 1, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("rs")})
+                        DraggableView(direction: .right, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("rs")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -310,7 +311,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("us name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .up, touches: 1, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("us")})
+                        DraggableView(direction: .up, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("us")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -329,7 +330,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("ds name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .down, touches: 1, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("ds")})
+                        DraggableView(direction: .down, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("ds")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -348,7 +349,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("2fls name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .left, touches: 2, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("2fls")})
+                        DraggableView(direction: .left, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fls")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -367,7 +368,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("2frs name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .right, touches: 2, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("2frs")})
+                        DraggableView(direction: .right, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2frs")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -386,7 +387,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("2fus name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .up, touches: 2, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("2fus")})
+                        DraggableView(direction: .up, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fus")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
@@ -405,7 +406,7 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                             .onAppear(perform: { print("2fds name changed") })
                             .animation(.easeInOut(duration: 0.2))
-                        DraggableView(direction: .down, touches: 2, draggedCallback:{(location, taps) in self.currentGestureDone = true; print("2fds")})
+                        DraggableView(direction: .down, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fds")})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }

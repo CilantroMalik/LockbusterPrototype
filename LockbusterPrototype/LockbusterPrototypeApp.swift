@@ -6,7 +6,7 @@
 //
 
 
-/* disabled for non-iOS 14
+/* disabled for non-iOS 14 */
 import SwiftUI
 
 @main
@@ -17,4 +17,4 @@ struct LockbusterPrototypeApp: App {
         }
     }
 }
-*/
+
