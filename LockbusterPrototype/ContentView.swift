@@ -173,9 +173,8 @@ struct PannableView: UIViewRepresentable {
 }
 
 // Backlog:
-// 1) test hiding status bar, fix any issues, and then add top/bottom edge pans
-// 2) test three-finger swipes to see if they are too clunky
-// 3) work on adding countdown mode and proper mode-select welcome screen
+// 1) test three-finger swipes to see if they are too clunky
+// 2) work on adding countdown mode and proper mode-select welcome screen
 
 var gestureName = ""
 var score = 0
@@ -204,15 +203,12 @@ struct ContentView: View {
                     if currentGestureDone { animateLock() }
                     else { createLock() }
                     
-                    Text("Score: \(score)").statusBar(hidden: true) // test this
+                    Text("Score: \(score)")
                 } else {
-                    //Text("Finished!").scaleEffect(4).animation(.easeInOut(duration: 1.5)).padding(.bottom)
                     Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
-                    //Text("Time: \(finalTime)s").scaleEffect(2.25).animation(.easeInOut(duration: 2.5)).padding(.top)
                     Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
                     let currentBest = Double(finalTime)!
                     if currentBest < previousBest {
-                        //Text("New best time!").scaleEffect(1.5).padding(.top)
                         Text("New best time!").padding(.top).font(.system(size: 26))
                         Text(String(format: "(Improved by %.3fs)", previousBest-currentBest)).padding(.top)
                     } else {
@@ -227,7 +223,6 @@ struct ContentView: View {
         print("animating lock")
         return AnyView(
             VStack {
-                //Text("a").scaleEffect(2).foregroundColor(.white)
                 Text("a").foregroundColor(.white).font(.system(size: 35))
                 ImageAnimated(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: 1, lock: currentLock)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
@@ -259,7 +254,6 @@ struct ContentView: View {
             gestureName = "Double Tap"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     Image("G1L\(self.currentLock)F1")
                         .resizable()
@@ -275,7 +269,6 @@ struct ContentView: View {
             gestureName = "Triple Tap"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     Image("G1L\(self.currentLock)F1")
                         .resizable()
@@ -291,7 +284,6 @@ struct ContentView: View {
             gestureName = "Rotate"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     Image("G1L\(self.currentLock)F1")
                         .resizable()
@@ -307,7 +299,6 @@ struct ContentView: View {
             gestureName = "Pinch"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     Image("G1L\(self.currentLock)F1")
                         .resizable()
@@ -323,7 +314,6 @@ struct ContentView: View {
             gestureName = "Two Finger Tap"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -343,7 +333,6 @@ struct ContentView: View {
             gestureName = "Three Finger Tap"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -363,7 +352,6 @@ struct ContentView: View {
             gestureName = "Left Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -383,7 +371,6 @@ struct ContentView: View {
             gestureName = "Right Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -403,7 +390,6 @@ struct ContentView: View {
             gestureName = "Up Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -423,7 +409,6 @@ struct ContentView: View {
             gestureName = "Down Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -443,7 +428,6 @@ struct ContentView: View {
             gestureName = "Two Finger Left Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -463,7 +447,6 @@ struct ContentView: View {
             gestureName = "Two Finger Right Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -483,7 +466,6 @@ struct ContentView: View {
             gestureName = "Two Finger Up Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -503,7 +485,6 @@ struct ContentView: View {
             gestureName = "Two Finger Down Swipe"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -523,7 +504,6 @@ struct ContentView: View {
             gestureName = "Long Press"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -541,7 +521,6 @@ struct ContentView: View {
             gestureName = "Two Finger Long Press"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -561,7 +540,6 @@ struct ContentView: View {
             gestureName = "Three Finger Long Press"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -581,7 +559,6 @@ struct ContentView: View {
             gestureName = "Left Edge Pan"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
@@ -601,7 +578,6 @@ struct ContentView: View {
             gestureName = "Right Edge Pan"
             return AnyView(
                 VStack {
-                    //Text(gestureName).scaleEffect(2)
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
                         Image("G1L\(self.currentLock)F1")
