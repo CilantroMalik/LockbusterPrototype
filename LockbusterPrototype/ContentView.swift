@@ -179,8 +179,10 @@ struct PannableView: UIViewRepresentable {
 }
 
 // Backlog:
-// 1) test three-finger swipes to see if they are too clunky
-// 2) work on adding countdown mode and proper mode-select welcome screen
+// 1) try countdown mode with dispatch queue instead of reference dates
+// 2) implement real-time countdown timer as opposed to only periodic updating
+// 3) test three-finger swipes to see if they are too clunky
+// 4) modify game flow and animations to speed up the pace of gameplay a little
 
 var gestureName = ""
 var score = 0
@@ -189,7 +191,6 @@ var mode: GameMode = .Speedrun
 var finalTime = ""
 var prevBestTime = 0.0
 // --- countdown mode ---
-var finalScore = ""
 var prevBestScore = 0
 // --- both ---
 var startTime: TimeInterval = 0.0
@@ -198,6 +199,7 @@ struct ContentView: View {
     @State var started: Bool = false
     @State var currentLock = 1
     @State var currentGestureDone = false
+    @State var timeUp = false
     
     var body: some View {
         return VStack {
@@ -216,9 +218,12 @@ struct ContentView: View {
                     print("current highscore is \(UserDefaults.standard.integer(forKey: "oneMinuteScore"))")
                     prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
                     mode = .Countdown
+                    DispatchQueue.main.asyncAfter(deadline: .now()+60.0, execute: {
+                        self.timeUp = true
+                    })
                     self.started = true
                 }).padding(.top)
-            } else { // TODO implement alternate logic for countdown mode
+            } else {
                 if mode == .Speedrun {
                     if finalTime == "" {
                         if currentGestureDone { animateLock() }
@@ -237,19 +242,15 @@ struct ContentView: View {
                         }
                     }
                 } else if mode == .Countdown {
-                    if finalScore == "" {
+                    if !timeUp {
                         if currentGestureDone { animateLock() }
                         else { createLock() }
-                        
-                        // put countdown timer text here
-                        Text(String(format: "%.3fs left", 60-Date.timeIntervalSinceReferenceDate+startTime))
                     } else {
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
-                        Text("Score: \(finalScore)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
-                        let currentBest = Int(finalScore)!
-                        if currentBest > prevBestScore {
+                        Text("Score: \(score)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
+                        if score > prevBestScore {
                             Text("New highscore!").padding(.top).font(.system(size: 26))
-                            Text("Improved by \(currentBest-prevBestScore)").padding(.top)
+                            Text("Improved by \(score-prevBestScore)").padding(.top)
                         } else {
                             Text("Highscore: \(prevBestScore)").padding(.top)
                         }
@@ -277,14 +278,6 @@ struct ContentView: View {
                                 if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {
                                     print("setting \(Double(finalTime)!); previous value \(prevBestTime)")
                                     UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")
-                                }
-                            }
-                        } else if mode == .Countdown {
-                            if Date.timeIntervalSinceReferenceDate-startTime >= 60.0 {
-                                finalScore = String(score)
-                                if score > prevBestScore {
-                                    print("setting \(Int(finalScore)!); previous value \(prevBestScore)")
-                                    UserDefaults.standard.set(Int(finalScore)!, forKey: "oneMinuteScore")
                                 }
                             }
                         }
