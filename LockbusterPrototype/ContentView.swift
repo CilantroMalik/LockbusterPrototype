@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+enum GameMode {
+    case Speedrun
+    case Countdown
+    case ChessClock
+}
+
 struct ImageAnimated: UIViewRepresentable {
     let imageSize: CGSize
     let group: Int
@@ -178,9 +184,15 @@ struct PannableView: UIViewRepresentable {
 
 var gestureName = ""
 var score = 0
-var startTime: TimeInterval = 0.0
+var mode: GameMode = .Speedrun
+// --- speedrun mode ---
 var finalTime = ""
-var previousBest = 0.0
+var prevBestTime = 0.0
+// --- countdown mode ---
+var finalScore = ""
+var prevBestScore = 0
+// --- both ---
+var startTime: TimeInterval = 0.0
 
 struct ContentView: View {
     @State var started: Bool = false
@@ -190,29 +202,57 @@ struct ContentView: View {
     var body: some View {
         return VStack {
             if !started {  // "welcome screen"
-                Text("Welcome to Lockbuster!")
-                Button("Start Game", action: {
+                Text("Welcome to Lockbuster!").padding(.bottom)
+                Button("Speedrun Mode", action: {
                     startTime = Date.timeIntervalSinceReferenceDate
                     print("starting game at time \(startTime)")
-                    print("current highscore is \(UserDefaults.standard.double(forKey: "hundredGesturesTime"))")
-                    previousBest = UserDefaults.standard.double(forKey: "hundredGesturesTime")
+                    print("current PB is \(UserDefaults.standard.double(forKey: "hundredGesturesTime"))")
+                    prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
                     self.started = true
-                })
-            } else {
-                if finalTime == "" {
-                    if currentGestureDone { animateLock() }
-                    else { createLock() }
-                    
-                    Text("Score: \(score)")
-                } else {
-                    Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
-                    Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
-                    let currentBest = Double(finalTime)!
-                    if currentBest < previousBest {
-                        Text("New best time!").padding(.top).font(.system(size: 26))
-                        Text(String(format: "(Improved by %.3fs)", previousBest-currentBest)).padding(.top)
+                }).padding(.top).padding(.bottom)
+                Button("Countdown Mode", action: {
+                    startTime = Date.timeIntervalSinceReferenceDate
+                    print("starting game at time \(startTime)")
+                    print("current highscore is \(UserDefaults.standard.integer(forKey: "oneMinuteScore"))")
+                    prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
+                    mode = .Countdown
+                    self.started = true
+                }).padding(.top)
+            } else { // TODO implement alternate logic for countdown mode
+                if mode == .Speedrun {
+                    if finalTime == "" {
+                        if currentGestureDone { animateLock() }
+                        else { createLock() }
+                        
+                        Text("Score: \(score)")
                     } else {
-                        Text(String(format: "Best time: %.3fs", previousBest)).padding(.top)
+                        Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
+                        Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
+                        let currentBest = Double(finalTime)!
+                        if currentBest < prevBestTime {
+                            Text("New best time!").padding(.top).font(.system(size: 26))
+                            Text(String(format: "(Improved by %.3fs)", prevBestTime-currentBest)).padding(.top)
+                        } else {
+                            Text(String(format: "Best time: %.3fs", prevBestTime)).padding(.top)
+                        }
+                    }
+                } else if mode == .Countdown {
+                    if finalScore == "" {
+                        if currentGestureDone { animateLock() }
+                        else { createLock() }
+                        
+                        // put countdown timer text here
+                        Text(String(format: "%.3fs left", 60-Date.timeIntervalSinceReferenceDate+startTime))
+                    } else {
+                        Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
+                        Text("Score: \(finalScore)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
+                        let currentBest = Int(finalScore)!
+                        if currentBest > prevBestScore {
+                            Text("New highscore!").padding(.top).font(.system(size: 26))
+                            Text("Improved by \(currentBest-prevBestScore)").padding(.top)
+                        } else {
+                            Text("Highscore: \(prevBestScore)").padding(.top)
+                        }
                     }
                 }
             }
@@ -231,11 +271,21 @@ struct ContentView: View {
                     print("finished animating");
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.6, execute: {
                         print("dispatch running")
-                        if score >= 5 {  // change for easier testing; revert to 100 for production
-                            finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)
-                            if Double(finalTime)! < previousBest || previousBest == 0.0 {
-                                print("setting \(Double(finalTime)!); previous value \(previousBest)")
-                                UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")
+                        if mode == .Speedrun {
+                            if score >= 5 {  // change for easier testing; revert to 100 for production
+                                finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)
+                                if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {
+                                    print("setting \(Double(finalTime)!); previous value \(prevBestTime)")
+                                    UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")
+                                }
+                            }
+                        } else if mode == .Countdown {
+                            if Date.timeIntervalSinceReferenceDate-startTime >= 60.0 {
+                                finalScore = String(score)
+                                if score > prevBestScore {
+                                    print("setting \(Int(finalScore)!); previous value \(prevBestScore)")
+                                    UserDefaults.standard.set(Int(finalScore)!, forKey: "oneMinuteScore")
+                                }
                             }
                         }
                         self.currentLock = Int.random(in: 1...5)
