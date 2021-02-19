@@ -178,23 +178,17 @@ struct PannableView: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<PannableView>) { }
 }
 
-// TODO: work on getting this start to trigger from the main view automatically instead of a button, and communicating between views
+
 struct TimerView: View {
-    @State var timeLeft = 60.0
-    @State var started = false
+    @State var timeLeft = 60.00
+    let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
     
     var body: some View {
-        if !started {
-            Button("Start Timer", action: {_ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: {_ in self.timeLeft -= 0.1; self.started = true})})
-        } else {
-            if timeLeft > 0 {
-                Text("\(timeLeft) seconds remaining")
-            } else {
-                Text("Time's up!")
-            }
-        }
+        Text(String(format: "%.2f seconds remaining", timeLeft))
+            .onReceive(timer, perform: { _ in
+                if timeLeft > 0 { timeLeft -= 0.01 }
+            }).padding(.top)
     }
-    
 }
 
 // Backlog:
@@ -238,9 +232,7 @@ struct ContentView: View {
                     print("current highscore is \(UserDefaults.standard.integer(forKey: "oneMinuteScore"))")
                     prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
                     mode = .Countdown
-                    DispatchQueue.main.asyncAfter(deadline: .now()+60.0, execute: {
-                        self.timeUp = true
-                    })
+                    _ = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false, block: {_ in self.timeUp = true})
                     self.started = true
                 }).padding(.top)
             } else {
@@ -664,7 +656,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        //ContentView()
-        TimerView()
+        ContentView()
     }
 }
