@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		15015D8C25E0322C0065E120 /* GestureHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15015D8B25E0322C0065E120 /* GestureHandlers.swift */; };
 		153CF62925D806D80030DDFE /* LockbusterPrototypeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153CF62825D806D80030DDFE /* LockbusterPrototypeApp.swift */; };
 		153CF62B25D806D80030DDFE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153CF62A25D806D80030DDFE /* ContentView.swift */; };
 		153CF62D25D806DC0030DDFE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 153CF62C25D806DC0030DDFE /* Assets.xcassets */; };
@@ -17,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		15015D8B25E0322C0065E120 /* GestureHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureHandlers.swift; sourceTree = "<group>"; };
 		153CF62525D806D70030DDFE /* LockbusterPrototype.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LockbusterPrototype.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		153CF62825D806D80030DDFE /* LockbusterPrototypeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockbusterPrototypeApp.swift; sourceTree = "<group>"; };
 		153CF62A25D806D80030DDFE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -66,6 +68,7 @@
 				153CF62C25D806DC0030DDFE /* Assets.xcassets */,
 				153CF63125D806DC0030DDFE /* Info.plist */,
 				153CF62E25D806DC0030DDFE /* Preview Content */,
+				15015D8B25E0322C0065E120 /* GestureHandlers.swift */,
 			);
 			path = LockbusterPrototype;
 			sourceTree = "<group>";
@@ -149,6 +152,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				15D0304725D9B88F00390551 /* AppDelegate.swift in Sources */,
+				15015D8C25E0322C0065E120 /* GestureHandlers.swift in Sources */,
 				153CF62B25D806D80030DDFE /* ContentView.swift in Sources */,
 				153CF62925D806D80030DDFE /* LockbusterPrototypeApp.swift in Sources */,
 				15D0304425D9B85800390551 /* SceneDelegate.swift in Sources */,
