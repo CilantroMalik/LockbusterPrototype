@@ -178,11 +178,31 @@ struct PannableView: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<PannableView>) { }
 }
 
+// TODO: work on getting this start to trigger from the main view automatically instead of a button, and communicating between views
+struct TimerView: View {
+    @State var timeLeft = 60.0
+    @State var started = false
+    
+    var body: some View {
+        if !started {
+            Button("Start Timer", action: {_ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: {_ in self.timeLeft -= 0.1; self.started = true})})
+        } else {
+            if timeLeft > 0 {
+                Text("\(timeLeft) seconds remaining")
+            } else {
+                Text("Time's up!")
+            }
+        }
+    }
+    
+}
+
 // Backlog:
-// 1) try countdown mode with dispatch queue instead of reference dates
-// 2) implement real-time countdown timer as opposed to only periodic updating
-// 3) test three-finger swipes to see if they are too clunky
-// 4) modify game flow and animations to speed up the pace of gameplay a little
+// 1) implement real-time countdown timer as opposed to only periodic updating
+// 2) test three-finger swipes to see if they are too clunky
+// 3) modify game flow and animations to speed up the pace of gameplay a little
+// 4) implement logic for upgrading locks as the player progresses
+// 5) in connection with 4, look into APIs for changing app icons at progression points
 
 var gestureName = ""
 var score = 0
@@ -245,6 +265,8 @@ struct ContentView: View {
                     if !timeUp {
                         if currentGestureDone { animateLock() }
                         else { createLock() }
+                        
+                        TimerView()
                     } else {
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
                         Text("Score: \(score)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
@@ -642,6 +664,7 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        //ContentView()
+        TimerView()
     }
 }
