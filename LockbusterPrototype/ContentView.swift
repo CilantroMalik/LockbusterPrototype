@@ -68,10 +68,9 @@ struct TimerView: View {
 }
 
 // Backlog:
-// 1) test three-finger swipes to see if they are too clunky
-// 2) implement logic for upgrading locks as the player progresses
-// 3) in connection with 2, look into APIs for changing app icons at progression points
-// 4) try to refactor createLock() to be more concise and less repetitive while preserving functionality
+// 1) implement logic for upgrading locks as the player progresses
+// 2) in connection with this, look into APIs for changing app icons at progression points
+// 3) try to refactor createLock() to be more concise and less repetitive while preserving functionality
 
 var gestureName = ""
 var score = 0
@@ -100,16 +99,19 @@ struct ContentView: View {
                     print("current PB is \(UserDefaults.standard.double(forKey: "hundredGesturesTime"))")
                     prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
                     self.started = true
-                }).padding(.top).padding(.bottom).font(.title2)
+                }).padding(.top).padding(.bottom).font(.system(size: 23))
                 Button("Countdown Mode", action: {
                     startTime = Date.timeIntervalSinceReferenceDate
                     print("starting game at time \(startTime)")
                     print("current highscore is \(UserDefaults.standard.integer(forKey: "oneMinuteScore"))")
                     prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
                     mode = .Countdown
-                    _ = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false, block: {_ in self.timeUp = true})
+                    _ = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false, block: {_ in
+                        self.timeUp = true
+                        if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }
+                    })
                     self.started = true
-                }).padding(.top).font(.title2)
+                }).padding(.top).font(.system(size: 23))
             } else {
                 if mode == .Speedrun {
                     if finalTime == "" {
