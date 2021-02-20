@@ -59,7 +59,7 @@ fastlane/test_output
 ### Xcode ###
 # Xcode
 #
-Assets.xcassets/
+# Assets.xcassets/
 
 ## Build generated
 
@@ -73,3 +73,7 @@ Assets.xcassets/
 !*.xcodeproj/xcshareddata/
 !*.xcworkspace/contents.xcworkspacedata
 /*.gcno
+
+# macOS artifacts
+.DS_Store
+*/.DS_Store
