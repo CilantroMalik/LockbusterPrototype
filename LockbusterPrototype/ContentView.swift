@@ -68,13 +68,18 @@ struct TimerView: View {
 }
 
 // Backlog:
-// 1) implement logic for upgrading locks as the player progresses
-// 2) in connection with this, look into APIs for changing app icons at progression points
-// 3) try to refactor createLock() to be more concise and less repetitive while preserving functionality
+// 1) put a "back" button on the end screen that returns to mode select
+// 2) try to refactor createLock() to be more concise and less repetitive while preserving functionality
+// 3) add a timer to speedrun mode
+// 4) add functionality where the player can select their target score or time for speedrun/countdown mode and create their own sub-modes
+// 5) begin prototyping for "chess clock" mode
 
+// --- game state variables ---
 var gestureName = ""
 var score = 0
+var lockGroup = 1
 var mode: GameMode = .Speedrun
+var upgrades: [Int] = []
 // --- speedrun mode ---
 var finalTime = ""
 var prevBestTime = 0.0
@@ -98,6 +103,7 @@ struct ContentView: View {
                     print("starting game at time \(startTime)")
                     print("current PB is \(UserDefaults.standard.double(forKey: "hundredGesturesTime"))")
                     prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
+                    upgrades = [20, 40, 60, 80]
                     self.started = true
                 }).padding(.top).padding(.bottom).font(.system(size: 23))
                 Button("Countdown Mode", action: {
@@ -106,6 +112,7 @@ struct ContentView: View {
                     print("current highscore is \(UserDefaults.standard.integer(forKey: "oneMinuteScore"))")
                     prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
                     mode = .Countdown
+                    upgrades = [9, 18, 27, 36, 45]
                     _ = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false, block: {_ in
                         self.timeUp = true
                         if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }
@@ -135,6 +142,7 @@ struct ContentView: View {
                         if currentGestureDone { animateLock() }
                         else { createLock() }
                         
+                        Text("Score: \(score)").padding(.bottom)
                         TimerView()
                     } else {
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
@@ -152,22 +160,18 @@ struct ContentView: View {
     }
     
     func animateLock() -> some View {
-        print("animating lock")
         return AnyView(
             VStack {
                 Text("a").foregroundColor(.white).font(.system(size: 35))
-                ImageAnimated(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: 1, lock: currentLock)
+                ImageAnimated(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: currentLock)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                .aspectRatio(contentMode: .fill)
+                    .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
-                    print("finished animating");
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
-                        print("dispatch running")
                         if mode == .Speedrun {
                             if score >= 5 {  // change for easier testing; revert to 100 for production
                                 finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)
                                 if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {
-                                    print("setting \(Double(finalTime)!); previous value \(prevBestTime)")
                                     UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")
                                 }
                             }
@@ -181,400 +185,353 @@ struct ContentView: View {
     }
     
     func createLock() -> some View {
-        print("creating lock")
-        let num = Int.random(in: 1...5) // change for simulator testing; revert to 23 for production
+        let num = Int.random(in: 1...2) // change for simulator testing; revert to 23 for production
         if num == 1 {
-            print("chosen 2t")
             gestureName = "Double Tap"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G1L\(self.currentLock)F1")
+                    Image("G\(lockGroup)L\(self.currentLock)F1")
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(TapGesture(count: 2).onEnded{score += 1; self.currentGestureDone = true; print("2t")})
-                        .onAppear(perform: { print("2t name changed") })
+                        .gesture(TapGesture(count: 2).onEnded{score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
             )
         } else if num == 2 {
-            print("chosen 3t")
             gestureName = "Triple Tap"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G1L\(self.currentLock)F1")
+                    Image("G\(lockGroup)L\(self.currentLock)F1")
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(TapGesture(count: 3).onEnded{score += 1; self.currentGestureDone = true; print("3t")})
-                        .onAppear(perform: { print("3t name changed") })
+                        .gesture(TapGesture(count: 3).onEnded{score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
             )
         } else if num == 3 {
-            print("chosen rot")
             gestureName = "Rotate"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G1L\(self.currentLock)F1")
+                    Image("G\(lockGroup)L\(self.currentLock)F1")
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(RotationGesture().onEnded{_ in score += 1; self.currentGestureDone = true; print("rot")})
-                        .onAppear(perform: { print("rot name changed") })
+                        .gesture(RotationGesture().onEnded{_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
             )
         } else if num == 4 {
-            print("chosen mag")
             gestureName = "Pinch"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G1L\(self.currentLock)F1")
+                    Image("G\(lockGroup)L\(self.currentLock)F1")
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(MagnificationGesture().onEnded{_ in score += 1; self.currentGestureDone = true; print("mag")})
-                        .onAppear(perform: { print("mag name changed") })
+                        .gesture(MagnificationGesture().onEnded{_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
             )
         } else if num == 5 {
-            print("chosen 2ft")
             gestureName = "Two Finger Tap"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2ft name changed") })
-                        TappableView(touches: 2, tappedCallback: {(_, _) in score += 1; self.currentGestureDone = true; print("2ft")})
+                        TappableView(touches: 2, tappedCallback: {(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 6 {
-            print("chosen 3ft")
             gestureName = "Three Finger Tap"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("3ft name changed") })
-                        TappableView(touches: 3, tappedCallback: {(_, _) in score += 1; self.currentGestureDone = true; print("3ft")})
-                            .aspectRatio(contentMode: .fill)
+                        TappableView(touches: 3, tappedCallback: {(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 7 {
-            print("chosen ls")
             gestureName = "Left Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("ls name changed") })
-                        DraggableView(direction: .left, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("ls")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .left, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 8 {
-            print("chosen rs")
             gestureName = "Right Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("rs name changed") })
-                        DraggableView(direction: .right, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("rs")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .right, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 9 {
-            print("chosen us")
             gestureName = "Up Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("us name changed") })
-                        DraggableView(direction: .up, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("us")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .up, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 10 {
-            print("chosen ds")
             gestureName = "Down Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("ds name changed") })
-                        DraggableView(direction: .down, touches: 1, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("ds")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .down, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 11 {
-            print("chosen 2fls")
             gestureName = "Two Finger Left Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2fls name changed") })
-                        DraggableView(direction: .left, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fls")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .left, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 12 {
-            print("chosen 2frs")
             gestureName = "Two Finger Right Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2frs name changed") })
-                        DraggableView(direction: .right, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2frs")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .right, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 13 {
-            print("chosen 2fus")
             gestureName = "Two Finger Up Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2fus name changed") })
-                        DraggableView(direction: .up, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fus")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .up, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 14 {
-            print("chosen 2fds")
             gestureName = "Two Finger Down Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2fds name changed") })
-                        DraggableView(direction: .down, touches: 2, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fds")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .down, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 15 {
-            print("chosen lp")
             gestureName = "Long Press"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("lp name changed") })
-                            .gesture(LongPressGesture(minimumDuration: 0.4).onEnded({_ in self.currentGestureDone = true; print("lp")}))
+                            .gesture(LongPressGesture(minimumDuration: 0.4).onEnded({_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true}))
                     }
                 }
             )
         } else if num == 16 {
-            print("chosen 2flp")
             gestureName = "Two Finger Long Press"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2flp name changed") })
-                        LongPressableView(touches: 2, pressedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2flp")})
-                            .aspectRatio(contentMode: .fill)
+                        LongPressableView(touches: 2, pressedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 17 {
-            print("chosen 3flp")
             gestureName = "Three Finger Long Press"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("3flp name changed") })
-                        LongPressableView(touches: 3, pressedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2flp")})
+                        LongPressableView(touches: 3, pressedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                             .aspectRatio(contentMode: .fill)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 18 {
-            print("chosen lep")
             gestureName = "Left Edge Pan"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("lep name changed") })
-                        PannableView(edge: .left, pannedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("lep")})
-                            .aspectRatio(contentMode: .fill)
+                        PannableView(edge: .left, pannedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 19 {
-            print("chosen rep")
             gestureName = "Right Edge Pan"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("rep name changed") })
-                        PannableView(edge: .right, pannedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("rep")})
-                            .aspectRatio(contentMode: .fill)
+                        PannableView(edge: .right, pannedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 20 {
-            print("chosen 3fls")
             gestureName = "Three Finger Left Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2fus name changed") })
-                        DraggableView(direction: .left, touches: 3, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fus")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .left, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 21 {
-            print("chosen 3frs")
             gestureName = "Three Finger Right Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2fus name changed") })
-                        DraggableView(direction: .right, touches: 3, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fus")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .right, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else if num == 22 {
-            print("chosen 3fus")
             gestureName = "Three Finger Up Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2fus name changed") })
-                        DraggableView(direction: .up, touches: 3, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fus")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .up, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
             )
         } else {
-            print("chosen 3fds")
             gestureName = "Three Finger Down Swipe"
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
                     ZStack {
-                        Image("G1L\(self.currentLock)F1")
+                        Image("G\(lockGroup)L\(self.currentLock)F1")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .onAppear(perform: { print("2fus name changed") })
-                        DraggableView(direction: .down, touches: 3, draggedCallback:{(_, _) in score += 1; self.currentGestureDone = true; print("2fus")})
-                            .aspectRatio(contentMode: .fill)
+                        DraggableView(direction: .down, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
                             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     }
                 }
