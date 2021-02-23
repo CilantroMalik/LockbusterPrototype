@@ -68,11 +68,10 @@ struct TimerView: View {
 }
 
 // Backlog:
-// 1) put a "back" button on the end screen that returns to mode select
-// 2) try to refactor createLock() to be more concise and less repetitive while preserving functionality
-// 3) add a timer to speedrun mode
-// 4) add functionality where the player can select their target score or time for speedrun/countdown mode and create their own sub-modes
-// 5) begin prototyping for "chess clock" mode
+// 1) try to refactor createLock() to be more concise and less repetitive while preserving functionality
+// 2) add a timer to speedrun mode
+// 3) add functionality where the player can select their target score or time for speedrun/countdown mode and create their own sub-modes
+// 4) begin prototyping for "chess clock" mode
 
 // --- game state variables ---
 var gestureName = ""
@@ -100,16 +99,12 @@ struct ContentView: View {
                 Text("Welcome to Lockbuster!").padding(.bottom).font(.system(size: 33))
                 Button("Speedrun Mode", action: {
                     startTime = Date.timeIntervalSinceReferenceDate
-                    print("starting game at time \(startTime)")
-                    print("current PB is \(UserDefaults.standard.double(forKey: "hundredGesturesTime"))")
                     prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
                     upgrades = [20, 40, 60, 80]
                     self.started = true
                 }).padding(.top).padding(.bottom).font(.system(size: 23))
                 Button("Countdown Mode", action: {
                     startTime = Date.timeIntervalSinceReferenceDate
-                    print("starting game at time \(startTime)")
-                    print("current highscore is \(UserDefaults.standard.integer(forKey: "oneMinuteScore"))")
                     prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
                     mode = .Countdown
                     upgrades = [9, 18, 27, 36, 45]
@@ -136,6 +131,7 @@ struct ContentView: View {
                         } else {
                             Text(String(format: "Best time: %.3fs", prevBestTime)).padding(.top)
                         }
+                        Button("Back to Mode Select", action: {finalTime = ""; score = 0; self.started = false}).padding(.top)
                     }
                 } else if mode == .Countdown {
                     if !timeUp {
@@ -153,6 +149,7 @@ struct ContentView: View {
                         } else {
                             Text("Highscore: \(prevBestScore)").padding(.top)
                         }
+                        Button("Back to Mode Select", action: {score = 0; self.timeUp = false; self.started = false}).padding(.top)
                     }
                 }
             }
