@@ -55,7 +55,7 @@ struct ImageAnimated: UIViewRepresentable {
 }
 
 
-struct TimerView: View {
+struct CountdownTimerView: View {
     @State var timeLeft = 60.00
     let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
     
@@ -67,11 +67,20 @@ struct TimerView: View {
     }
 }
 
+struct SpeedrunClockView: View {
+    @State var timeElapsed = 0.00
+    let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
+    
+    var body: some View {
+        Text(String(format: "%.2f seconds elapsed", timeElapsed)).padding(.top)
+            .onReceive(timer, perform: { _ in timeElapsed += 0.01 })
+    }
+}
+
 // Backlog:
 // 1) try to refactor createLock() to be more concise and less repetitive while preserving functionality
-// 2) add a timer to speedrun mode
-// 3) add functionality where the player can select their target score or time for speedrun/countdown mode and create their own sub-modes
-// 4) begin prototyping for "chess clock" mode
+// 2) add functionality where the player can select their target score or time for speedrun/countdown mode and create their own sub-modes
+// 3) begin prototyping for "chess clock" mode
 
 // --- game state variables ---
 var gestureName = ""
@@ -120,7 +129,8 @@ struct ContentView: View {
                         if currentGestureDone { animateLock() }
                         else { createLock() }
                         
-                        Text("Score: \(score)")
+                        Text("Score: \(score)").padding(.bottom)
+                        SpeedrunClockView()
                     } else {
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
                         Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
@@ -139,7 +149,7 @@ struct ContentView: View {
                         else { createLock() }
                         
                         Text("Score: \(score)").padding(.bottom)
-                        TimerView()
+                        CountdownTimerView()
                     } else {
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
                         Text("Score: \(score)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
