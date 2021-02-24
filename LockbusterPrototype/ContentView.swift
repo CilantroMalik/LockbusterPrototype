@@ -56,7 +56,7 @@ struct ImageAnimated: UIViewRepresentable {
 
 
 struct CountdownTimerView: View {
-    @State var timeLeft = 60.00
+    @State var timeLeft = timeSelection
     let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -78,9 +78,10 @@ struct SpeedrunClockView: View {
 }
 
 // Backlog:
-// 1) try to refactor createLock() to be more concise and less repetitive while preserving functionality
-// 2) add functionality where the player can select their target score or time for speedrun/countdown mode and create their own sub-modes
+// 1) prettify end screen and other text elements using font weight and styles
+// 2) try to refactor createLock() to be more concise and less repetitive while preserving functionality
 // 3) begin prototyping for "chess clock" mode
+// 4) create pictographic glyphs for gestures to eliminate the need for text
 
 // --- game state variables ---
 var gestureName = ""
@@ -91,8 +92,10 @@ var upgrades: [Int] = []
 // --- speedrun mode ---
 var finalTime = ""
 var prevBestTime = 0.0
+var scoreSelection = 100
 // --- countdown mode ---
 var prevBestScore = 0
+var timeSelection = 60.0
 // --- both ---
 var startTime: TimeInterval = 0.0
 
@@ -106,23 +109,26 @@ struct ContentView: View {
         return VStack {
             if !started {  // "welcome screen"
                 Text("Welcome to Lockbuster!").padding(.bottom).font(.system(size: 33))
-                Button("Speedrun Mode", action: {
-                    startTime = Date.timeIntervalSinceReferenceDate
-                    prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
-                    upgrades = [20, 40, 60, 80]
-                    self.started = true
-                }).padding(.top).padding(.bottom).font(.system(size: 23))
-                Button("Countdown Mode", action: {
-                    startTime = Date.timeIntervalSinceReferenceDate
-                    prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
-                    mode = .Countdown
-                    upgrades = [9, 18, 27, 36, 45]
-                    _ = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false, block: {_ in
-                        self.timeUp = true
-                        if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }
-                    })
-                    self.started = true
-                }).padding(.top).font(.system(size: 23))
+                
+                Text("— Speedrun Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
+                Text("Select a target score:").padding(.bottom)
+                HStack {
+                    Button("25", action: { scoreSelection = 25; startSpeedrun() }).padding(.trailing).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("50", action: { scoreSelection = 50; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("60", action: { scoreSelection = 60; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("80", action: { scoreSelection = 80; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("100", action: { scoreSelection = 100; startSpeedrun() }).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                }
+                
+                Text("— Countdown Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
+                Text("Select a time limit:").padding(.bottom)
+                HStack {
+                    Button("30s", action: { timeSelection = 30.0; startCountdown() }).padding(.trailing).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("1m", action: { timeSelection = 60.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("2m", action: { timeSelection = 120.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("3m", action: { timeSelection = 180.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("5m", action: { timeSelection = 300.0; startCountdown() }).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                }
             } else {
                 if mode == .Speedrun {
                     if finalTime == "" {
@@ -166,6 +172,25 @@ struct ContentView: View {
         }
     }
     
+    func startSpeedrun() {
+        startTime = Date.timeIntervalSinceReferenceDate
+        prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
+        upgrades = [20, 40, 60, 80]
+        self.started = true
+    }
+    
+    func startCountdown() {
+        startTime = Date.timeIntervalSinceReferenceDate
+        prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
+        mode = .Countdown
+        upgrades = [9, 18, 27, 36, 45]
+        _ = Timer.scheduledTimer(withTimeInterval: timeSelection, repeats: false, block: {_ in
+            self.timeUp = true
+            if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }
+        })
+        self.started = true
+    }
+    
     func animateLock() -> some View {
         return AnyView(
             VStack {
@@ -176,7 +201,7 @@ struct ContentView: View {
                 .onAppear(perform: {
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
                         if mode == .Speedrun {
-                            if score >= 5 {  // change for easier testing; revert to 100 for production
+                            if score >= 5 {  // change for easier testing; revert to `scoreSelection` for production
                                 finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)
                                 if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {
                                     UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")
