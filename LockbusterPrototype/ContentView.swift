@@ -78,10 +78,9 @@ struct SpeedrunClockView: View {
 }
 
 // Backlog:
-// 1) prettify end screen and other text elements using font weight and styles
-// 2) try to refactor createLock() to be more concise and less repetitive while preserving functionality
-// 3) begin prototyping for "chess clock" mode
-// 4) create pictographic glyphs for gestures to eliminate the need for text
+// 1) try to refactor createLock() to be more concise and less repetitive while preserving functionality
+// 2) begin prototyping for "chess clock" mode
+// 3) create pictographic glyphs for gestures to eliminate the need for text
 
 // --- game state variables ---
 var gestureName = ""
@@ -113,21 +112,21 @@ struct ContentView: View {
                 Text("— Speedrun Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
                 Text("Select a target score:").padding(.bottom)
                 HStack {
-                    Button("25", action: { scoreSelection = 25; startSpeedrun() }).padding(.trailing).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("50", action: { scoreSelection = 50; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("60", action: { scoreSelection = 60; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("80", action: { scoreSelection = 80; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("100", action: { scoreSelection = 100; startSpeedrun() }).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                    Button("25", action: { scoreSelection = 25; startSpeedrun() }).padding(.trailing).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("50", action: { scoreSelection = 50; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("60", action: { scoreSelection = 60; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("80", action: { scoreSelection = 80; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("100", action: { scoreSelection = 100; startSpeedrun() }).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                 }
                 
                 Text("— Countdown Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
                 Text("Select a time limit:").padding(.bottom)
-                HStack {
-                    Button("30s", action: { timeSelection = 30.0; startCountdown() }).padding(.trailing).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("1m", action: { timeSelection = 60.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("2m", action: { timeSelection = 120.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("3m", action: { timeSelection = 180.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
-                    Button("5m", action: { timeSelection = 300.0; startCountdown() }).padding(.leading).font(.system(size: 23, weight: .bold, design: .rounded))
+                HStack {  // TODO play around with padding length to make this fit
+                    Button("30s", action: { timeSelection = 30.0; startCountdown() }).padding(.trailing).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("1m", action: { timeSelection = 60.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("2m", action: { timeSelection = 120.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("3m", action: { timeSelection = 180.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
+                    Button("5m", action: { timeSelection = 300.0; startCountdown() }).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                 }
             } else {
                 if mode == .Speedrun {
@@ -138,16 +137,16 @@ struct ContentView: View {
                         Text("Score: \(score)").padding(.bottom)
                         SpeedrunClockView()
                     } else {
-                        Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
-                        Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
+                        Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75, weight: .black, design: .default))
+                        Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38, weight: .bold, design: .default))
                         let currentBest = Double(finalTime)!
                         if currentBest < prevBestTime {
-                            Text("New best time!").padding(.top).font(.system(size: 26))
+                            Text("New best time!").padding(.top).font(.system(size: 26, weight: .semibold))
                             Text(String(format: "(Improved by %.3fs)", prevBestTime-currentBest)).padding(.top)
                         } else {
                             Text(String(format: "Best time: %.3fs", prevBestTime)).padding(.top)
                         }
-                        Button("Back to Mode Select", action: {finalTime = ""; score = 0; self.started = false}).padding(.top)
+                        Button("Back to Mode Select", action: {finalTime = ""; score = 0; lockGroup = 1; self.started = false}).padding(.top)
                     }
                 } else if mode == .Countdown {
                     if !timeUp {
@@ -157,15 +156,15 @@ struct ContentView: View {
                         Text("Score: \(score)").padding(.bottom)
                         CountdownTimerView()
                     } else {
-                        Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75))
-                        Text("Score: \(score)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38))
+                        Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75, weight: .bold, design: .default))
+                        Text("Score: \(score)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38, weight: .semibold, design: .default))
                         if score > prevBestScore {
                             Text("New highscore!").padding(.top).font(.system(size: 26))
                             Text("Improved by \(score-prevBestScore)").padding(.top)
                         } else {
                             Text("Highscore: \(prevBestScore)").padding(.top)
                         }
-                        Button("Back to Mode Select", action: {score = 0; self.timeUp = false; self.started = false}).padding(.top)
+                        Button("Back to Mode Select", action: {score = 0; self.timeUp = false; lockGroup = 1; self.started = false}).padding(.top)
                     }
                 }
             }
@@ -176,6 +175,7 @@ struct ContentView: View {
         startTime = Date.timeIntervalSinceReferenceDate
         prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
         upgrades = [20, 40, 60, 80]
+        mode = .Speedrun
         self.started = true
     }
     
@@ -201,7 +201,7 @@ struct ContentView: View {
                 .onAppear(perform: {
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
                         if mode == .Speedrun {
-                            if score >= 5 {  // change for easier testing; revert to `scoreSelection` for production
+                            if score >= scoreSelection {  // change for easier testing; revert to `scoreSelection` for production
                                 finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)
                                 if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {
                                     UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")
