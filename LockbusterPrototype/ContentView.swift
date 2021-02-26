@@ -23,8 +23,7 @@ struct ImageAnimated: UIViewRepresentable {
     func makeUIView(context: Self.Context) -> UIView {
         let imageNames = (1...13).map { "G\(group)L\(lock)F\($0)" }
         
-        let containerView = UIView(frame: CGRect(x: 0, y: 0
-            , width: imageSize.width, height: imageSize.height))
+        let containerView = UIView(frame: CGRect(x: 0, y: 0, width: imageSize.width, height: imageSize.height))
 
         let animationImageView = UIImageView(frame: CGRect(x: 0, y: 0, width: imageSize.width, height: imageSize.height))
 
@@ -35,9 +34,7 @@ struct ImageAnimated: UIViewRepresentable {
 
         var images = [UIImage]()
         imageNames.forEach { imageName in
-            if let img = UIImage(named: imageName) {
-                images.append(img)
-            }
+            if let img = UIImage(named: imageName) { images.append(img) }
         }
 
         animationImageView.animationImages = images
@@ -78,9 +75,8 @@ struct SpeedrunClockView: View {
 }
 
 // Backlog:
-// 1) try to refactor createLock() to be more concise and less repetitive while preserving functionality
-// 2) begin prototyping for "chess clock" mode
-// 3) create pictographic glyphs for gestures to eliminate the need for text
+// 1) begin prototyping for "chess clock" mode
+// 2) create pictographic glyphs for gestures to eliminate the need for text (possibly animated)
 
 // --- game state variables ---
 var gestureName = ""
@@ -121,7 +117,7 @@ struct ContentView: View {
                 
                 Text("— Countdown Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
                 Text("Select a time limit:").padding(.bottom)
-                HStack {  // TODO play around with padding length to make this fit
+                HStack {
                     Button("30s", action: { timeSelection = 30.0; startCountdown() }).padding(.trailing).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("1m", action: { timeSelection = 60.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("2m", action: { timeSelection = 120.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
@@ -174,7 +170,8 @@ struct ContentView: View {
     func startSpeedrun() {
         startTime = Date.timeIntervalSinceReferenceDate
         prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
-        upgrades = [20, 40, 60, 80]
+        // possibly change behavior to not be completely the same for all score categories (i.e. switch statement)
+        upgrades = [Int(scoreSelection/5), Int(2*scoreSelection/5), Int(3*scoreSelection/5), Int(4*scoreSelection/5)]
         mode = .Speedrun
         self.started = true
     }
@@ -183,7 +180,19 @@ struct ContentView: View {
         startTime = Date.timeIntervalSinceReferenceDate
         prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
         mode = .Countdown
-        upgrades = [9, 18, 27, 36, 45]
+        switch timeSelection {
+            case 30.0:
+                upgrades = [6, 12, 18, 24, 30]; break
+            case 60.0:
+                upgrades = [9, 18, 27, 36, 45]; break
+            case 120.0:
+                upgrades = [15, 27, 41, 55, 70]; break
+            case 180.0:
+                upgrades = [20, 37, 55, 72, 90, 108]; break
+            case 300.0:
+                upgrades = [25, 50, 75, 100, 125, 150, 175, 200]; break
+            default: break
+        }
         _ = Timer.scheduledTimer(withTimeInterval: timeSelection, repeats: false, block: {_ in
             self.timeUp = true
             if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }
@@ -214,34 +223,6 @@ struct ContentView: View {
                 })
             }
         )
-    }
-    
-    struct LockView: View {
-        var tap: TappableView?
-        var drag: DraggableView?
-        var longPress: LongPressableView?
-        var pan: PannableView?
-        var currentLock: Int
-        
-        var body: some View {
-            VStack {
-                Text(gestureName).font(.system(size: 35))
-                ZStack {
-                    Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    if tap != nil { tap.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
-                    else if drag != nil { drag.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
-                    else if longPress != nil { longPress.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
-                    else if pan != nil { pan.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
-                }
-            }
-        }
-    }
-    
-    func gestureDone() {
-        score += 1
-        if upgrades.contains(score) { lockGroup += 1 }
-        self.currentGestureDone = true
     }
     
     func createLock() -> some View {
@@ -351,6 +332,34 @@ struct ContentView: View {
         } else {
             gestureName = "Three Finger Down Swipe"
             return AnyView(LockView(tap: nil, drag: DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
+        }
+    }
+    
+    func gestureDone() {
+        score += 1
+        if upgrades.contains(score) { lockGroup += 1 }
+        self.currentGestureDone = true
+    }
+    
+    struct LockView: View {
+        var tap: TappableView?
+        var drag: DraggableView?
+        var longPress: LongPressableView?
+        var pan: PannableView?
+        var currentLock: Int
+        
+        var body: some View {
+            VStack {
+                Text(gestureName).font(.system(size: 35))
+                ZStack {
+                    Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    if tap != nil { tap.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                    else if drag != nil { drag.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                    else if longPress != nil { longPress.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                    else if pan != nil { pan.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                }
+            }
         }
     }
 }
