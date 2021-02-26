@@ -216,6 +216,34 @@ struct ContentView: View {
         )
     }
     
+    struct LockView: View {
+        var tap: TappableView?
+        var drag: DraggableView?
+        var longPress: LongPressableView?
+        var pan: PannableView?
+        var currentLock: Int
+        
+        var body: some View {
+            VStack {
+                Text(gestureName).font(.system(size: 35))
+                ZStack {
+                    Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    if tap != nil { tap.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                    else if drag != nil { drag.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                    else if longPress != nil { longPress.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                    else if pan != nil { pan.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
+                }
+            }
+        }
+    }
+    
+    func gestureDone() {
+        score += 1
+        if upgrades.contains(score) { lockGroup += 1 }
+        self.currentGestureDone = true
+    }
+    
     func createLock() -> some View {
         let num = Int.random(in: 1...2) // change for simulator testing; revert to 23 for production
         if num == 1 {
@@ -268,306 +296,61 @@ struct ContentView: View {
             )
         } else if num == 5 {
             gestureName = "Two Finger Tap"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        TappableView(touches: 2, tappedCallback: {(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: TappableView(touches: 2, tappedCallback: {(_, _) in gestureDone()}), drag: nil, longPress: nil, currentLock: self.currentLock))
         } else if num == 6 {
             gestureName = "Three Finger Tap"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        TappableView(touches: 3, tappedCallback: {(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: TappableView(touches: 3, tappedCallback: {(_, _) in gestureDone()}), drag: nil, longPress: nil, currentLock: self.currentLock))
         } else if num == 7 {
             gestureName = "Left Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .left, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .left, touches: 1, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 8 {
             gestureName = "Right Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .right, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .right, touches: 1, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 9 {
             gestureName = "Up Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .up, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .up, touches: 1, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 10 {
             gestureName = "Down Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .down, touches: 1, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .down, touches: 1, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 11 {
             gestureName = "Two Finger Left Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .left, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .left, touches: 2, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 12 {
             gestureName = "Two Finger Right Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .right, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .right, touches: 2, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 13 {
             gestureName = "Two Finger Up Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .up, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .up, touches: 2, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 14 {
             gestureName = "Two Finger Down Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .down, touches: 2, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .down, touches: 2, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 15 {
             gestureName = "Long Press"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                            .gesture(LongPressGesture(minimumDuration: 0.4).onEnded({_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true}))
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: nil, longPress: LongPressableView(touches: 1, pressedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
         } else if num == 16 {
             gestureName = "Two Finger Long Press"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        LongPressableView(touches: 2, pressedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: nil, longPress: LongPressableView(touches: 2, pressedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
         } else if num == 17 {
             gestureName = "Three Finger Long Press"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        LongPressableView(touches: 3, pressedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: nil, longPress: LongPressableView(touches: 3, pressedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
         } else if num == 18 {
             gestureName = "Left Edge Pan"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        PannableView(edge: .left, pannedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: nil, longPress: nil, pan: PannableView(edge: .left, pannedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
         } else if num == 19 {
             gestureName = "Right Edge Pan"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        PannableView(edge: .right, pannedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: nil, longPress: nil, pan: PannableView(edge: .left, pannedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
         } else if num == 20 {
             gestureName = "Three Finger Left Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .left, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .left, touches: 3, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 21 {
             gestureName = "Three Finger Right Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .right, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else if num == 22 {
             gestureName = "Three Finger Up Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .up, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         } else {
             gestureName = "Three Finger Down Swipe"
-            return AnyView(
-                VStack {
-                    Text(gestureName).font(.system(size: 35))
-                    ZStack {
-                        Image("G\(lockGroup)L\(self.currentLock)F1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        DraggableView(direction: .down, touches: 3, draggedCallback:{(_, _) in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
-                            .aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
-                }
-            )
+            return AnyView(LockView(tap: nil, drag: DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
         }
     }
 }
