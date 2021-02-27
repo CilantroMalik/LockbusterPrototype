@@ -60,7 +60,9 @@ struct AnimatedImage: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<AnimatedImage>) { }
 }
 
-
+/// CountdownTimerView: stores a self-updating timer that counts down from the user's selected time limit
+/// (which will be stored as a global variable when this view is instantiated) in increments of 0.01 second, using a publisher.
+/// Simply store this in a single text box that updates when it receives an event from the timer publisher.
 struct CountdownTimerView: View {
     @State var timeLeft = timeSelection
     let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
@@ -73,6 +75,8 @@ struct CountdownTimerView: View {
     }
 }
 
+/// SpeedrunClockView: analog to the CountdownTimerView that counts up instead of down, indefinitely until the user reaches the desired score
+/// (since this is Speedrun mode and does not have a time target). Also counts in increments of 0.01 second and will reside as a subview of the main view.
 struct SpeedrunClockView: View {
     @State var timeElapsed = 0.00
     let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
@@ -83,40 +87,51 @@ struct SpeedrunClockView: View {
     }
 }
 
+// =============================================
 // Backlog:
 // 1) begin prototyping for "chess clock" mode
 // 2) create pictographic glyphs for gestures to eliminate the need for text (possibly animated)
+// =============================================
 
 // --- game state variables ---
-var gestureName = ""
-var score = 0
-var lockGroup = 1
-var mode: GameMode = .Speedrun
-var upgrades: [Int] = []
-// --- speedrun mode ---
-var finalTime = ""
-var prevBestTime = 0.0
-var scoreSelection = 100
-// --- countdown mode ---
-var prevBestScore = 0
-var timeSelection = 60.0
-// --- both ---
-var startTime: TimeInterval = 0.0
+var gestureName = ""  /// the name of the current gesture
+var score = 0  /// the player's current score
+var lockGroup = 1  /// the lock upgrade level the player has reached in the current game
+var mode: GameMode = .Speedrun  /// the game mode the player is currently playing
+var upgrades: [Int] = []  /// the score thresholds at which the lock is upgraded
+// speedrun mode
+var finalTime = ""  /// the player's time upon reaching the desired score
+var prevBestTime = 0.0  /// the player's previous best time in Speedrun Mode (fetched at startup from UserDefaults)
+var scoreSelection = 100  /// the Speedrun Mode "category" that the user has selected, defining the game's target score
+// countdown mode
+var prevBestScore = 0  /// the player's previous best score in Countdown Mode (fetched at startup from UserDefaults)
+var timeSelection = 60.0  /// the Countdown Mode "category" that the user has selected, defining the game's time limit
+// both
+var startTime: TimeInterval = 0.0  /// the absolute time since the epoch at which the player starts the game
 
+
+// --- main view ---
+/// ContentView: the main game view that encapsulates the state and behavior of the game
 struct ContentView: View {
+    /// toggles whether to show the welcome/mode select screen; starts false, becomes true when user selects a mode and false again when they finish a game
     @State var started: Bool = false
+    /// keeps track of the lock number within the current group (randomly assigned for each new lock
     @State var currentLock = 1
+    /// triggers the selection of a new gesture; this variable is toggled every time a gesture recognizer receives its gesture
     @State var currentGestureDone = false
+    /// toggled when the timer runs out (only in Countdown Mode) to force trigger the end screen
     @State var timeUp = false
     
+    /// contains all the visual elements that will be displayed at any point in the game
     var body: some View {
+        // wrap all of our elements into a vertical stack on screen
         return VStack {
-            if !started {  // "welcome screen"
+            if !started {  // display the "welcome screen"
                 Text("Welcome to Lockbuster!").padding(.bottom).font(.system(size: 33))
                 
                 Text("— Speedrun Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
                 Text("Select a target score:").padding(.bottom)
-                HStack {
+                HStack {  // provide category selection options; each one sets the score selection global variable to the appropriate amount and triggers a function to start the game
                     Button("25", action: { scoreSelection = 25; startSpeedrun() }).padding(.trailing).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("50", action: { scoreSelection = 50; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("60", action: { scoreSelection = 60; startSpeedrun() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
@@ -126,7 +141,7 @@ struct ContentView: View {
                 
                 Text("— Countdown Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
                 Text("Select a time limit:").padding(.bottom)
-                HStack {
+                HStack {  // similar to the previous, let the user select a time limit, store it in the global, and trigger the start function
                     Button("30s", action: { timeSelection = 30.0; startCountdown() }).padding(.trailing).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("1m", action: { timeSelection = 60.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("2m", action: { timeSelection = 120.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
@@ -179,9 +194,20 @@ struct ContentView: View {
     func startSpeedrun() {
         startTime = Date.timeIntervalSinceReferenceDate
         prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
-        // possibly change behavior to not be completely the same for all score categories (i.e. switch statement)
-        upgrades = [Int(scoreSelection/5), Int(2*scoreSelection/5), Int(3*scoreSelection/5), Int(4*scoreSelection/5)]
         mode = .Speedrun
+        switch scoreSelection {
+            case 25:
+                upgrades = [7, 14, 21]; break
+            case 50:
+                upgrades = [9, 20, 32, 45]; break
+            case 60:
+                upgrades = [11, 22, 33, 44, 55]; break
+            case 80:
+                upgrades = [13, 27, 40, 53, 66, 80]; break
+            case 100:
+                upgrades = [15, 30, 45, 60, 75, 90, 99]; break
+            default: break
+        }
         self.started = true
     }
     
