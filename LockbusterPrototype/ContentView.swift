@@ -7,48 +7,57 @@
 
 import SwiftUI
 
-
+// --- enums ---
+/// GameMode: keeps track of the game mode for readability and transparency
 enum GameMode {
     case Speedrun
     case Countdown
     case ChessClock
 }
 
-struct ImageAnimated: UIViewRepresentable {
+// --- auxiliary views ---
+/// AnimatedImage: stores an animated image composed of a number of individual frames (using UIImageView, which has this functionality built in)
+/// Essentially a UIView wrapped in UIViewRepresentable so it can be compatible with SwiftUI. Has a set duration and extracts the frames of animation from the assets.
+struct AnimatedImage: UIViewRepresentable {
+    // take in image size as a parameter, as well as identifiers for the lock we want to animate
     let imageSize: CGSize
     let group: Int
     let lock: Int
     let duration: Double = 0.45
 
     func makeUIView(context: Self.Context) -> UIView {
-        let imageNames = (1...13).map { "G\(group)L\(lock)F\($0)" }
+        let imageNames = (1...13).map { "G\(group)L\(lock)F\($0)" }  // use image name file format to generate from parameters
         
+        // create the larger UIView that will be returned as well as the ImageView that stores our animation
         let containerView = UIView(frame: CGRect(x: 0, y: 0, width: imageSize.width, height: imageSize.height))
 
         let animationImageView = UIImageView(frame: CGRect(x: 0, y: 0, width: imageSize.width, height: imageSize.height))
 
+        // set properties of the animation view
         animationImageView.clipsToBounds = true
         animationImageView.layer.cornerRadius = 5
         animationImageView.autoresizesSubviews = true
         animationImageView.contentMode = UIView.ContentMode.scaleAspectFill
 
+        // use the list of image names generated above to make a list of the actual image objects for the animation
         var images = [UIImage]()
         imageNames.forEach { imageName in
             if let img = UIImage(named: imageName) { images.append(img) }
         }
-
+        
+        // then add these to the animation view and set properties of the animation
         animationImageView.animationImages = images
         animationImageView.animationDuration = duration
         animationImageView.animationRepeatCount = 1
         animationImageView.startAnimating()
 
+        // add the ImageView to our main view and return it
         containerView.addSubview(animationImageView)
         return containerView
     }
 
-    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<ImageAnimated>) {
-
-    }
+    // needs to be here for conformance to UIViewRepresentable, but we do not need it for this use case
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<AnimatedImage>) { }
 }
 
 
@@ -135,13 +144,13 @@ struct ContentView: View {
                     } else {
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75, weight: .black, design: .default))
                         Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38, weight: .bold, design: .default))
+                        
                         let currentBest = Double(finalTime)!
                         if currentBest < prevBestTime {
                             Text("New best time!").padding(.top).font(.system(size: 26, weight: .semibold))
                             Text(String(format: "(Improved by %.3fs)", prevBestTime-currentBest)).padding(.top)
-                        } else {
-                            Text(String(format: "Best time: %.3fs", prevBestTime)).padding(.top)
-                        }
+                        } else { Text(String(format: "Best time: %.3fs", prevBestTime)).padding(.top) }
+                        
                         Button("Back to Mode Select", action: {finalTime = ""; score = 0; lockGroup = 1; self.started = false}).padding(.top)
                     }
                 } else if mode == .Countdown {
@@ -154,12 +163,12 @@ struct ContentView: View {
                     } else {
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75, weight: .bold, design: .default))
                         Text("Score: \(score)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38, weight: .semibold, design: .default))
+                        
                         if score > prevBestScore {
                             Text("New highscore!").padding(.top).font(.system(size: 26))
                             Text("Improved by \(score-prevBestScore)").padding(.top)
-                        } else {
-                            Text("Highscore: \(prevBestScore)").padding(.top)
-                        }
+                        } else { Text("Highscore: \(prevBestScore)").padding(.top) }
+                        
                         Button("Back to Mode Select", action: {score = 0; self.timeUp = false; lockGroup = 1; self.started = false}).padding(.top)
                     }
                 }
@@ -204,9 +213,8 @@ struct ContentView: View {
         return AnyView(
             VStack {
                 Text("a").foregroundColor(.white).font(.system(size: 35))
-                ImageAnimated(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: currentLock)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    .aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: currentLock)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
                         if mode == .Speedrun {
@@ -232,9 +240,7 @@ struct ContentView: View {
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G\(lockGroup)L\(self.currentLock)F1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                    Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                         .gesture(TapGesture(count: 2).onEnded{score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
@@ -244,9 +250,7 @@ struct ContentView: View {
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G\(lockGroup)L\(self.currentLock)F1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                    Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                         .gesture(TapGesture(count: 3).onEnded{score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
@@ -256,9 +260,7 @@ struct ContentView: View {
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G\(lockGroup)L\(self.currentLock)F1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                    Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                         .gesture(RotationGesture().onEnded{_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
@@ -268,9 +270,7 @@ struct ContentView: View {
             return AnyView(
                 VStack {
                     Text(gestureName).font(.system(size: 35))
-                    Image("G\(lockGroup)L\(self.currentLock)F1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                    Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                         .gesture(MagnificationGesture().onEnded{_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
