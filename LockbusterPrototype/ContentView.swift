@@ -126,7 +126,7 @@ struct ContentView: View {
     var body: some View {
         // wrap all of our elements into a vertical stack on screen
         return VStack {
-            if !started {  // display the "welcome screen"
+            if !started {  // display the welcome / mode select screen
                 Text("Welcome to Lockbuster!").padding(.bottom).font(.system(size: 33))
                 
                 Text("— Speedrun Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
@@ -148,43 +148,43 @@ struct ContentView: View {
                     Button("3m", action: { timeSelection = 180.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("5m", action: { timeSelection = 300.0; startCountdown() }).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                 }
-            } else {
-                if mode == .Speedrun {
-                    if finalTime == "" {
-                        if currentGestureDone { animateLock() }
-                        else { createLock() }
+            } else {  // main game screen
+                if mode == .Speedrun {  // Speedrun Mode: slightly altered UI elements from Countdown, so has to be a separate set of code
+                    if finalTime == "" {  // if the game is not over (this variable will take on a value once the target score is reached, so it serves as a proxy for a game over flag)
+                        if currentGestureDone { animateLock() }  // if the current gesture has been finished, run this function, which creates & displays the opening lock
+                        else { createLock() }  // if not, create a new lock (this runs in the immediate next view update cycle after the animated lock to create a new gesture & image)
                         
-                        Text("Score: \(score)").padding(.bottom)
-                        SpeedrunClockView()
-                    } else {
+                        Text("Score: \(score)").padding(.bottom)  // display the player's score
+                        SpeedrunClockView()  // so the player can keep track of their time during the game, display a clock view
+                    } else {  // if the game is over: display the end screen and the player's final time
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75, weight: .black, design: .default))
                         Text("Time: \(finalTime)s").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38, weight: .bold, design: .default))
                         
-                        let currentBest = Double(finalTime)!
-                        if currentBest < prevBestTime {
+                        let currentBest = Double(finalTime)!  // cast their time to a double so we can compare it to the previous best time and see if this is a new best
+                        if currentBest < prevBestTime {  // if this is a new best, display this and show how much the player improved
                             Text("New best time!").padding(.top).font(.system(size: 26, weight: .semibold))
                             Text(String(format: "(Improved by %.3fs)", prevBestTime-currentBest)).padding(.top)
-                        } else { Text(String(format: "Best time: %.3fs", prevBestTime)).padding(.top) }
+                        } else { Text(String(format: "Best time: %.3fs", prevBestTime)).padding(.top) }  // if not, show the player their best time as motivation
                         
-                        Button("Back to Mode Select", action: {finalTime = ""; score = 0; lockGroup = 1; self.started = false}).padding(.top)
+                        Button("Back to Mode Select", action: {finalTime = ""; score = 0; lockGroup = 1; self.started = false}).padding(.top)  // reset the game state, re-toggle the welcome screen
                     }
-                } else if mode == .Countdown {
-                    if !timeUp {
+                } else if mode == .Countdown {  // Countdown Mode: different UI and end screen (as well as logic) from Speedrun Mode
+                    if !timeUp {  // game is not over: same idea as Speedrun Mode in this case
                         if currentGestureDone { animateLock() }
                         else { createLock() }
                         
                         Text("Score: \(score)").padding(.bottom)
-                        CountdownTimerView()
-                    } else {
+                        CountdownTimerView()  // except use a CountdownTimerView instead of a SpeedrunClockView since this one has to count down instead of up and has slightly different text
+                    } else {  // game is over: modified end screen — this time, report the user's score instead of time for this mode
                         Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75, weight: .bold, design: .default))
                         Text("Score: \(score)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 38, weight: .semibold, design: .default))
-                        
+                        // check whether their score this game was a highscore or not; if yes, display as such and show the amount of improvement
                         if score > prevBestScore {
                             Text("New highscore!").padding(.top).font(.system(size: 26))
                             Text("Improved by \(score-prevBestScore)").padding(.top)
-                        } else { Text("Highscore: \(prevBestScore)").padding(.top) }
+                        } else { Text("Highscore: \(prevBestScore)").padding(.top) }  // if it was not a highscore, remind the player of their high score, similarly to Speedrun Mode
                         
-                        Button("Back to Mode Select", action: {score = 0; self.timeUp = false; lockGroup = 1; self.started = false}).padding(.top)
+                        Button("Back to Mode Select", action: {score = 0; self.timeUp = false; lockGroup = 1; self.started = false}).padding(.top)  // same logic as before
                     }
                 }
             }
