@@ -191,11 +191,12 @@ struct ContentView: View {
         }
     }
     
+    // function that handles game start tasks for Speedrun Mode
     func startSpeedrun() {
-        startTime = Date.timeIntervalSinceReferenceDate
-        prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")
-        mode = .Speedrun
-        switch scoreSelection {
+        startTime = Date.timeIntervalSinceReferenceDate  // set start time to the current time since the epoch
+        prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")  // retrieve the previous best time from UserDefaults and store it
+        mode = .Speedrun  // set the game mode
+        switch scoreSelection {  // decide the lock upgrade score thresholds based on the selected "category"
             case 25:
                 upgrades = [7, 14, 21]; break
             case 50:
@@ -206,16 +207,17 @@ struct ContentView: View {
                 upgrades = [13, 27, 40, 53, 66, 80]; break
             case 100:
                 upgrades = [15, 30, 45, 60, 75, 90, 99]; break
-            default: break
+            default: break  // will never happen
         }
-        self.started = true
+        self.started = true  // start the game; this is a state variable so this toggle triggers a view refresh which begins rendering locks
     }
     
+    // function that handles game start tasks for Countdown Mode
     func startCountdown() {
-        startTime = Date.timeIntervalSinceReferenceDate
+        startTime = Date.timeIntervalSinceReferenceDate  // similar logic to above for start time and retrieving highscores
         prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
-        mode = .Countdown
-        switch timeSelection {
+        mode = .Countdown  // set the game mode
+        switch timeSelection {  // decide the lock upgrade thresholds, this time based on the selected time category
             case 30.0:
                 upgrades = [6, 12, 18, 24, 30]; break
             case 60.0:
@@ -226,41 +228,46 @@ struct ContentView: View {
                 upgrades = [20, 37, 55, 72, 90, 108]; break
             case 300.0:
                 upgrades = [25, 50, 75, 100, 125, 150, 175, 200]; break
-            default: break
+            default: break  // same as the function above, will never happen
         }
+        // create the timer with time interval decided by the selected category which, when completed, will trigger the end of the game
         _ = Timer.scheduledTimer(withTimeInterval: timeSelection, repeats: false, block: {_ in
-            self.timeUp = true
-            if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }
+            self.timeUp = true  // will immediately trigger a view refresh onto the end screen
+            if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }  // update the highscore if the user got one
         })
-        self.started = true
+        self.started = true  // finally, after the setup, start the game
     }
     
+    // function that handles the animation of each lock after a gesture is completed and continues the game flow
     func animateLock() -> some View {
         return AnyView(
             VStack {
-                Text("a").foregroundColor(.white).font(.system(size: 35))
+                Text("a").foregroundColor(.white).font(.system(size: 35))  // same size as the gesture name text to make sure the lock is in the same place in the view for a seamless transition
+                // create an animated image with the same size as all our other lock images; set its group from the global variable (or one less if we have just crossed a threshold)
                 AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: currentLock)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                .onAppear(perform: {
-                    DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
-                        if mode == .Speedrun {
-                            if score >= scoreSelection {  // change for easier testing; revert to `scoreSelection` for production
-                                finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)
-                                if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {
-                                    UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)  // same as static image
+                .onAppear(perform: {  // do not want to change state during view update, so we pass it off to onAppear
+                    DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {  // after the animation is completed...
+                        if mode == .Speedrun {  // check if the game is over if playing Speedrun Mode
+                            if score >= scoreSelection {  // if the player has met the score goal they selected
+                                finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)  // record the player's final time (also triggers the end screen in the view)
+                                if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {  // if they have a new best time (or if they have never had a time before)
+                                    UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")  // set UserDefaults to reflect their new best
                                 }
                             }
                         }
-                        self.currentLock = Int.random(in: 1...5)
-                        self.currentGestureDone = false
+                        self.currentLock = Int.random(in: 1...5)  // choose a new randomly selected lock in the group for the next gesture
+                        self.currentGestureDone = false  // re-toggle this flag to begin another gesture cycle
                     })
                 })
             }
         )
     }
     
+    // function that chooses a lock and returns a view containing that lock along with all necessary gesture recognizers and text
     func createLock() -> some View {
-        let num = Int.random(in: 1...2) // change for simulator testing; revert to 23 for production
+        let num = Int.random(in: 1...2)  // select a random gesture
+        // for double/triple tap, pinch, and rotate, use vanilla SwiftUI gestures; when a gesture is completed, we increment score, check whether to upgrade the lock, and set the done flag
         if num == 1 {
             gestureName = "Double Tap"
             return AnyView(
@@ -301,6 +308,7 @@ struct ContentView: View {
                         .gesture(MagnificationGesture().onEnded{_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
                 }
             )
+        // for all the rest of the gestures, create a LockView and pass it either a TappableView, DraggableView, LongPressableView, or PannableView with appropriate parameters for the gesture
         } else if num == 5 {
             gestureName = "Two Finger Tap"
             return AnyView(LockView(tap: TappableView(touches: 2, tappedCallback: {(_, _) in gestureDone()}), drag: nil, longPress: nil, currentLock: self.currentLock))
