@@ -267,7 +267,7 @@ struct ContentView: View {
     // function that chooses a lock and returns a view containing that lock along with all necessary gesture recognizers and text
     func createLock() -> some View {
         let num = Int.random(in: 1...2)  // select a random gesture
-        // for double/triple tap, pinch, and rotate, use vanilla SwiftUI gestures; when a gesture is completed, we increment score, check whether to upgrade the lock, and set the done flag
+        // for double/triple tap, pinch, and rotate, use vanilla SwiftUI gestures; when a gesture is completed, we call a small helper function (to avoid too much repetition)
         if num == 1 {
             gestureName = "Double Tap"
             return AnyView(
@@ -275,7 +275,7 @@ struct ContentView: View {
                     Text(gestureName).font(.system(size: 35))
                     Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(TapGesture(count: 2).onEnded{score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                        .gesture(TapGesture(count: 2).onEnded{gestureDone()})
                 }
             )
         } else if num == 2 {
@@ -285,7 +285,7 @@ struct ContentView: View {
                     Text(gestureName).font(.system(size: 35))
                     Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(TapGesture(count: 3).onEnded{score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                        .gesture(TapGesture(count: 3).onEnded{gestureDone()})
                 }
             )
         } else if num == 3 {
@@ -295,7 +295,7 @@ struct ContentView: View {
                     Text(gestureName).font(.system(size: 35))
                     Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(RotationGesture().onEnded{_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                        .gesture(RotationGesture().onEnded{_ in gestureDone()})
                 }
             )
         } else if num == 4 {
@@ -305,7 +305,7 @@ struct ContentView: View {
                     Text(gestureName).font(.system(size: 35))
                     Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        .gesture(MagnificationGesture().onEnded{_ in score += 1; if upgrades.contains(score) {lockGroup += 1}; self.currentGestureDone = true})
+                        .gesture(MagnificationGesture().onEnded{_ in gestureDone()})
                 }
             )
         // for all the rest of the gestures, create a LockView and pass it either a TappableView, DraggableView, LongPressableView, or PannableView with appropriate parameters for the gesture
@@ -369,25 +369,27 @@ struct ContentView: View {
         }
     }
     
+    // small helper function that handles tasks to do when the gesture is finished — we increment score, check whether to upgrade the lock, and set the done flag
     func gestureDone() {
         score += 1
-        if upgrades.contains(score) { lockGroup += 1 }
+        if upgrades.contains(score) { lockGroup += 1 }  // if we have reached a predefined score threshold
         self.currentGestureDone = true
     }
     
+    // Auxiliary view that stores the gesture label, lock image, and gesture recognizer for a single lock
     struct LockView: View {
-        var tap: TappableView?
-        var drag: DraggableView?
-        var longPress: LongPressableView?
-        var pan: PannableView?
-        var currentLock: Int
+        var tap: TappableView?  // if this lock has a TapGesture
+        var drag: DraggableView?  // if this lock has a DragGesture
+        var longPress: LongPressableView?  // if this lock has a LongPressGesture
+        var pan: PannableView?  // if this lock has a ScreenEdgePanGesture
+        var currentLock: Int  // have to abstract this out
         
         var body: some View {
-            VStack {
+            VStack {  // align the text and image vertically
                 Text(gestureName).font(.system(size: 35))
-                ZStack {
+                ZStack {  // the gesture recognizer is directly on top of the lock, so its entire area can receive gesture events
                     Image("G\(lockGroup)L\(self.currentLock)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)  // create the same aspect ratio and frame for each element
                     if tap != nil { tap.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
                     else if drag != nil { drag.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
                     else if longPress != nil { longPress.aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center) }
@@ -398,7 +400,7 @@ struct ContentView: View {
     }
 }
 
-
+// debug purposes only
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
