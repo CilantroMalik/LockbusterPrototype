@@ -194,7 +194,7 @@ struct ContentView: View {
     // function that handles game start tasks for Speedrun Mode
     func startSpeedrun() {
         startTime = Date.timeIntervalSinceReferenceDate  // set start time to the current time since the epoch
-        prevBestTime = UserDefaults.standard.double(forKey: "hundredGesturesTime")  // retrieve the previous best time from UserDefaults and store it
+        prevBestTime = UserDefaults.standard.double(forKey: "speedrun\(scoreSelection)Time")  // retrieve the previous best time from UserDefaults and store it
         mode = .Speedrun  // set the game mode
         switch scoreSelection {  // decide the lock upgrade score thresholds based on the selected "category"
             case 25:
@@ -215,7 +215,7 @@ struct ContentView: View {
     // function that handles game start tasks for Countdown Mode
     func startCountdown() {
         startTime = Date.timeIntervalSinceReferenceDate  // similar logic to above for start time and retrieving highscores
-        prevBestScore = UserDefaults.standard.integer(forKey: "oneMinuteScore")
+        prevBestScore = UserDefaults.standard.integer(forKey: "countdown\(timeSelection)Score")
         mode = .Countdown  // set the game mode
         switch timeSelection {  // decide the lock upgrade thresholds, this time based on the selected time category
             case 30.0:
@@ -233,7 +233,7 @@ struct ContentView: View {
         // create the timer with time interval decided by the selected category which, when completed, will trigger the end of the game
         _ = Timer.scheduledTimer(withTimeInterval: timeSelection, repeats: false, block: {_ in
             self.timeUp = true  // will immediately trigger a view refresh onto the end screen
-            if score > prevBestScore { UserDefaults.standard.set(score, forKey: "oneMinuteScore") }  // update the highscore if the user got one
+            if score > prevBestScore { UserDefaults.standard.set(score, forKey: "countdown\(timeSelection)Score") }  // update the highscore if the user got one
         })
         self.started = true  // finally, after the setup, start the game
     }
@@ -252,7 +252,7 @@ struct ContentView: View {
                             if score >= scoreSelection {  // if the player has met the score goal they selected
                                 finalTime = String(format: "%.3f", Date.timeIntervalSinceReferenceDate-startTime)  // record the player's final time (also triggers the end screen in the view)
                                 if Double(finalTime)! < prevBestTime || prevBestTime == 0.0 {  // if they have a new best time (or if they have never had a time before)
-                                    UserDefaults.standard.set(Double(finalTime)!, forKey: "hundredGesturesTime")  // set UserDefaults to reflect their new best
+                                    UserDefaults.standard.set(Double(finalTime)!, forKey: "speedrun\(scoreSelection)Time")  // set UserDefaults to reflect their new best
                                 }
                             }
                         }
