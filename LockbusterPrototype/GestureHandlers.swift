@@ -10,19 +10,20 @@ import SwiftUI
 
 /// GestureHandlers
 /// File that contains various auxiliary views that function as UIKit gesture recognizers, for those gestures that UIKit supported but that do not have direct analogs in SwiftUI yet.
-/// Includes multi-finger taps, ssignle- or multi-finger directional swipes, multi-finger long presses, and screen edge pans.
+/// Includes multi-finger taps, single- or multi-finger directional swipes, multi-finger long presses, and screen edge pans.
 
 
 /// TappableView: UIView wrapper that contains a UIKit Tap Gesture Recognizer (they have much more customization than SwiftUI gestures)
 struct TappableView: UIViewRepresentable {
-    var touches: Int  // how many touches (two or three)
+    var touches: Int  // how many touches (i.e. number of fingers)
+    var taps: Int // how many taps needed
     var tappedCallback: ((CGPoint, Int) -> Void)  // what to do when tapped
     
     // main function that renders our view
     func makeUIView(context: UIViewRepresentableContext<TappableView>) -> UIView {
         let v = UIView(frame: .zero)
         let gesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped))  // create our gesture
-        gesture.numberOfTapsRequired = 1  // configure the gesture
+        gesture.numberOfTapsRequired = taps  // configure the gesture
         gesture.numberOfTouchesRequired = touches
         v.addGestureRecognizer(gesture)  // then add it to the containe view and return it
         return v
@@ -147,4 +148,62 @@ struct PannableView: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<PannableView>) { }
+}
+
+struct RotatableView: UIViewRepresentable {
+    var rotatedCallback: ((CGPoint, Int) -> Void)  // what to do when the rotation is registered
+    
+    // As before, analogous implementations to the other gesture handler views
+    func makeUIView(context: UIViewRepresentableContext<RotatableView>) -> UIView {
+        let v = UIView(frame: .zero)
+        let gesture = UIRotationGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.rotated))
+        v.addGestureRecognizer(gesture)
+        return v
+    }
+    
+    class Coordinator: NSObject {
+        var rotatedCallback: ((CGPoint, Int) -> Void)
+        init(rotatedCallback: @escaping ((CGPoint, Int) -> Void)) {
+            self.rotatedCallback = rotatedCallback
+        }
+        @objc func rotated(gesture: UIRotationGestureRecognizer) {
+            let point = gesture.location(in: gesture.view)
+            self.rotatedCallback(point, 1)
+        }
+    }
+    
+    func makeCoordinator() -> RotatableView.Coordinator {
+        return Coordinator(rotatedCallback: self.rotatedCallback)
+    }
+    
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<RotatableView>) { }
+}
+
+struct PinchableView: UIViewRepresentable {
+    var pinchedCallback: ((CGPoint, Int) -> Void)  // what to do when the pinch is registered
+    
+    // Again, these implementations are similar to the other gesture handler views, slightly different only because of the type of gesture being configured
+    func makeUIView(context: UIViewRepresentableContext<PinchableView>) -> UIView {
+        let v = UIView(frame: .zero)
+        let gesture = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pinched))
+        v.addGestureRecognizer(gesture)
+        return v
+    }
+    
+    class Coordinator: NSObject {
+        var pinchedCallback: ((CGPoint, Int) -> Void)
+        init(pinchedCallback: @escaping ((CGPoint, Int) -> Void)) {
+            self.pinchedCallback = pinchedCallback
+        }
+        @objc func pinched(gesture: UIPinchGestureRecognizer) {
+            let point = gesture.location(in: gesture.view)
+            self.pinchedCallback(point, 1)
+        }
+    }
+    
+    func makeCoordinator() -> PinchableView.Coordinator {
+        return Coordinator(pinchedCallback: self.pinchedCallback)
+    }
+    
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<PinchableView>) { }
 }

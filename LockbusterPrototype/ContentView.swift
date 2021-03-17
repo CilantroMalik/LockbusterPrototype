@@ -108,6 +108,12 @@ var prevBestScore = 0  /// the player's previous best score in Countdown Mode (f
 var timeSelection = 60.0  /// the Countdown Mode "category" that the user has selected, defining the game's time limit
 // both
 var startTime: TimeInterval = 0.0  /// the absolute time since the epoch at which the player starts the game
+// chess clock mode
+var sequenceLength = 3
+var roundNum = 1
+var currentRound: [AnyView] = []
+var currentPosition = 0
+var sequenceText = ""
 
 
 // --- main view ---
@@ -121,6 +127,9 @@ struct ContentView: View {
     @State var currentGestureDone = false
     /// toggled when the timer runs out (only in Countdown Mode) to force trigger the end screen
     @State var timeUp = false
+    // ----- chess clock mode -----
+    @State var roundFinished = false
+    @State var gestureFinished = false
     
     /// contains all the visual elements that will be displayed at any point in the game
     var body: some View {
@@ -311,10 +320,10 @@ struct ContentView: View {
         // for all the rest of the gestures, create a LockView and pass it either a TappableView, DraggableView, LongPressableView, or PannableView with appropriate parameters for the gesture
         } else if num == 5 {
             gestureName = "Two Finger Tap"
-            return AnyView(LockView(tap: TappableView(touches: 2, tappedCallback: {(_, _) in gestureDone()}), drag: nil, longPress: nil, currentLock: self.currentLock))
+            return AnyView(LockView(tap: TappableView(touches: 2, taps: 1, tappedCallback: {(_, _) in gestureDone()}), drag: nil, longPress: nil, currentLock: self.currentLock))
         } else if num == 6 {
             gestureName = "Three Finger Tap"
-            return AnyView(LockView(tap: TappableView(touches: 3, tappedCallback: {(_, _) in gestureDone()}), drag: nil, longPress: nil, currentLock: self.currentLock))
+            return AnyView(LockView(tap: TappableView(touches: 3, taps: 1, tappedCallback: {(_, _) in gestureDone()}), drag: nil, longPress: nil, currentLock: self.currentLock))
         } else if num == 7 {
             gestureName = "Left Swipe"
             return AnyView(LockView(tap: nil, drag: DraggableView(direction: .left, touches: 1, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
@@ -353,7 +362,7 @@ struct ContentView: View {
             return AnyView(LockView(tap: nil, drag: nil, longPress: nil, pan: PannableView(edge: .left, pannedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
         } else if num == 19 {
             gestureName = "Right Edge Pan"
-            return AnyView(LockView(tap: nil, drag: nil, longPress: nil, pan: PannableView(edge: .left, pannedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
+            return AnyView(LockView(tap: nil, drag: nil, longPress: nil, pan: PannableView(edge: .right, pannedCallback: {(_, _) in gestureDone()}), currentLock: self.currentLock))
         } else if num == 20 {
             gestureName = "Three Finger Left Swipe"
             return AnyView(LockView(tap: nil, drag: DraggableView(direction: .left, touches: 3, draggedCallback: {(_, _) in gestureDone()}), longPress: nil, pan: nil, currentLock: self.currentLock))
@@ -375,6 +384,61 @@ struct ContentView: View {
         if upgrades.contains(score) { lockGroup += 1 }  // if we have reached a predefined score threshold
         self.currentGestureDone = true
     }
+    
+    // ------------ chess clock mode functions ------------
+    
+    func createSequence() {
+        if Int.random(in: 1...3) == 1 { sequenceLength += 1 }
+        
+        var gestures: [Int] = []
+        for _ in 1...sequenceLength {
+            gestures.append(Int.random(in: 1...23))
+        }
+        var gestureViews: [AnyView] = []
+        for id in gestures {
+            switch id {
+                case 1: gestureViews.append(AnyView(TappableView(touches: 1, taps: 2, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2t "; break;
+                case 2: gestureViews.append(AnyView(TappableView(touches: 1, taps: 3, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3t "; break;
+                case 3: gestureViews.append(AnyView(RotatableView(rotatedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rot "; break;
+                case 4: gestureViews.append(AnyView(PinchableView(pinchedCallback: {(_, _) in advanceSequence()}))); sequenceText += "mag "; break;
+                case 5: gestureViews.append(AnyView(TappableView(touches: 2, taps: 1, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ft "; break;
+                case 6: gestureViews.append(AnyView(TappableView(touches: 3, taps: 1, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3ft "; break;
+                case 7: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "ls "; break;
+                case 8: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rs "; break;
+                case 9: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "us "; break;
+                case 10: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "ds "; break;
+                case 11: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ls "; break;
+                case 12: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2rs "; break;
+                case 13: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2us "; break;
+                case 14: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ds "; break;
+                case 15: gestureViews.append(AnyView(LongPressableView(touches: 1, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "lp "; break;
+                case 16: gestureViews.append(AnyView(LongPressableView(touches: 2, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2lp "; break;
+                case 17: gestureViews.append(AnyView(LongPressableView(touches: 3, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3lp "; break;
+                case 18: gestureViews.append(AnyView(PannableView(edge: .left, pannedCallback: {(_, _) in advanceSequence()}))); sequenceText += "lep "; break;
+                case 19: gestureViews.append(AnyView(PannableView(edge: .right, pannedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rep "; break;
+                case 20: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3ls "; break;
+                case 21: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3rs "; break;
+                case 22: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3us "; break;
+                case 23: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3ds "; break;
+                default: break;
+            }
+        }
+        currentRound = gestureViews
+        sequenceText.removeLast()
+    }
+    
+    func advanceSequence() {
+        if currentPosition == sequenceLength-1 {
+            createSequence()
+            self.roundFinished = true
+        }
+        else {
+            currentPosition += 1
+            self.gestureFinished = true
+        }
+    }
+    
+    // ------------ end chess clock mode functions ------------
     
     // Auxiliary view that stores the gesture label, lock image, and gesture recognizer for a single lock
     struct LockView: View {
