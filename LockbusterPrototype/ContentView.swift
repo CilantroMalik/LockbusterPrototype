@@ -109,10 +109,9 @@ var timeSelection = 60.0  /// the Countdown Mode "category" that the user has se
 // both
 var startTime: TimeInterval = 0.0  /// the absolute time since the epoch at which the player starts the game
 // chess clock mode
-var sequenceLength = 3
+var sequenceLength = 2
 var roundNum = 1
 var currentRound: [AnyView] = []
-var currentPosition = 0
 var sequenceText = ""
 
 
@@ -129,7 +128,7 @@ struct ContentView: View {
     @State var timeUp = false
     // ----- chess clock mode -----
     @State var roundFinished = false
-    @State var gestureFinished = false
+    @State var currentPosition = 0
     
     /// contains all the visual elements that will be displayed at any point in the game
     var body: some View {
@@ -157,6 +156,9 @@ struct ContentView: View {
                     Button("3m", action: { timeSelection = 180.0; startCountdown() }).padding(.trailing).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                     Button("5m", action: { timeSelection = 300.0; startCountdown() }).padding(.leading).font(.system(size: 20, weight: .bold, design: .rounded))
                 }
+                
+                Text("— Chess Clock Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
+                Button("Begin", action: { startChessClock() } ).font(.system(size: 20, weight: .bold, design: .rounded))
             } else {  // main game screen
                 if mode == .Speedrun {  // Speedrun Mode: slightly altered UI elements from Countdown, so has to be a separate set of code
                     if finalTime == "" {  // if the game is not over (this variable will take on a value once the target score is reached, so it serves as a proxy for a game over flag)
@@ -194,6 +196,13 @@ struct ContentView: View {
                         } else { Text("Highscore: \(prevBestScore)").padding(.top) }  // if it was not a highscore, remind the player of their high score, similarly to Speedrun Mode
                         
                         Button("Back to Mode Select", action: {score = 0; self.timeUp = false; lockGroup = 1; self.started = false}).padding(.top)  // same logic as before
+                    }
+                } else if mode == .ChessClock {
+                    if roundFinished {
+                        animate()
+                    }
+                    else {
+                        update()
                     }
                 }
             }
@@ -245,6 +254,12 @@ struct ContentView: View {
             if score > prevBestScore { UserDefaults.standard.set(score, forKey: "countdown\(timeSelection)Score") }  // update the highscore if the user got one
         })
         self.started = true  // finally, after the setup, start the game
+    }
+    
+    func startChessClock() {
+        mode = .ChessClock
+        createSequence()
+        self.started = true
     }
     
     // function that handles the animation of each lock after a gesture is completed and continues the game flow
@@ -387,15 +402,25 @@ struct ContentView: View {
     
     // ------------ chess clock mode functions ------------
     
+    // TODO for chess clock mode, in order of priority
+    // 1. add timing and time bonuses every round, lose when time runs out
+    // 2. add different locks and lock progression
+    // 3. add more information in-game (time and round number)
+    // 4. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
+    // 5. add UserDefaults integration for highscores
+    // 6. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
+    // 7. add special locks (e.g. time freeze/slow, time bonus, etc)
+    
     func createSequence() {
         if Int.random(in: 1...3) == 1 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
-            gestures.append(Int.random(in: 1...23))
+            gestures.append(Int.random(in: 1...5))
         }
         var gestureViews: [AnyView] = []
         for id in gestures {
+            print("gesture id: \(id)")
             switch id {
                 case 1: gestureViews.append(AnyView(TappableView(touches: 1, taps: 2, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2t "; break;
                 case 2: gestureViews.append(AnyView(TappableView(touches: 1, taps: 3, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3t "; break;
@@ -429,13 +454,48 @@ struct ContentView: View {
     
     func advanceSequence() {
         if currentPosition == sequenceLength-1 {
-            createSequence()
+            roundNum += 1
+            sequenceText = ""
             self.roundFinished = true
         }
         else {
-            currentPosition += 1
-            self.gestureFinished = true
+            self.currentPosition += 1
         }
+    }
+    
+    func update() -> some View {
+        let currGestureView = currentRound[currentPosition]
+        let currGestureName = sequenceText.split(separator: " ")[currentPosition]
+        print("displaying gesture \(currGestureName)")
+        return AnyView(
+            VStack {
+                Text(sequenceText)
+                Text(currGestureName)
+                ZStack {
+                    Image("G1L1F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                }
+            }
+        )
+    }
+    
+    func animate() -> some View {
+        return AnyView(
+            VStack {
+                Text("a").foregroundColor(.white)
+                Text("b").foregroundColor(.white)
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: 1, lock: 1)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                .onAppear(perform: {
+                    DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
+                        createSequence()
+                        currentPosition = 0
+                        roundFinished = false
+                    })
+                })
+            }
+        )
     }
     
     // ------------ end chess clock mode functions ------------
