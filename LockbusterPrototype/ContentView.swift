@@ -113,6 +113,8 @@ var sequenceLength = 2
 var roundNum = 1
 var currentRound: [AnyView] = []
 var sequenceText = ""
+var chessClockTime = 10.00
+var chessClockOver = false
 
 
 // --- main view ---
@@ -129,6 +131,7 @@ struct ContentView: View {
     // ----- chess clock mode -----
     @State var roundFinished = false
     @State var currentPosition = 0
+    @StateObject var chessClockTimer = TimerProgress()
     
     /// contains all the visual elements that will be displayed at any point in the game
     var body: some View {
@@ -198,12 +201,9 @@ struct ContentView: View {
                         Button("Back to Mode Select", action: {score = 0; self.timeUp = false; lockGroup = 1; self.started = false}).padding(.top)  // same logic as before
                     }
                 } else if mode == .ChessClock {
-                    if roundFinished {
-                        animate()
-                    }
-                    else {
-                        update()
-                    }
+                    if roundFinished { animate() }
+                    else { update() }
+                    ChessClockTimerView(timeController: chessClockTimer)
                 }
             }
         }
@@ -402,21 +402,20 @@ struct ContentView: View {
     
     // ------------ chess clock mode functions ------------
     
-    // TODO for chess clock mode, in order of priority
-    // 1. add timing and time bonuses every round, lose when time runs out
-    // 2. add different locks and lock progression
-    // 3. add more information in-game (time and round number)
-    // 4. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
-    // 5. add UserDefaults integration for highscores
-    // 6. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
-    // 7. add special locks (e.g. time freeze/slow, time bonus, etc)
+    // TODO for chess clock mode, in order of priority]
+    // 1. add different locks and lock progression
+    // 2. add more information in-game (time and round number)
+    // 3. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
+    // 4. add UserDefaults integration for highscores
+    // 5. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
+    // 6. add special locks (e.g. time freeze/slow, time bonus, etc)
     
     func createSequence() {
         if Int.random(in: 1...3) == 1 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
-            gestures.append(Int.random(in: 1...5))
+            gestures.append(Int.random(in: 1...4))
         }
         var gestureViews: [AnyView] = []
         for id in gestures {
@@ -489,6 +488,7 @@ struct ContentView: View {
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
+                        chessClockTime += 6.00
                         createSequence()
                         currentPosition = 0
                         roundFinished = false
@@ -496,6 +496,28 @@ struct ContentView: View {
                 })
             }
         )
+    }
+    
+    class TimerProgress: ObservableObject {
+        @Published var chessClockTimeUp = false
+    }
+    
+    struct ChessClockTimerView: View {
+        @State var timeLeft = 10.00
+        @ObservedObject var timeController: TimerProgress
+        
+        let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
+        
+        var body: some View {
+            Text(String(format: "%.2f seconds remaining", timeLeft))
+                .onReceive(timer, perform: { _ in advanceTime() }).padding(.top)
+        }
+        
+        func advanceTime() {
+            if chessClockTime != timeLeft { timeLeft = chessClockTime }
+            if timeLeft > 0 { timeLeft -= 0.01; chessClockTime -= 0.01 }
+            else { timeController.chessClockTimeUp = true }
+        }
     }
     
     // ------------ end chess clock mode functions ------------
