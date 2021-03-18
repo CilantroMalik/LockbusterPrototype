@@ -113,8 +113,10 @@ var sequenceLength = 2
 var roundNum = 1
 var currentRound: [AnyView] = []
 var sequenceText = ""
-var chessClockTime = 10.00
+var chessClockTime = 1000.00
 var chessClockOver = false
+var ccLockGroup = 1
+var ccLockNum = 1
 
 
 // --- main view ---
@@ -201,9 +203,14 @@ struct ContentView: View {
                         Button("Back to Mode Select", action: {score = 0; self.timeUp = false; lockGroup = 1; self.started = false}).padding(.top)  // same logic as before
                     }
                 } else if mode == .ChessClock {
-                    if roundFinished { animate() }
-                    else { update() }
-                    ChessClockTimerView(timeController: chessClockTimer)
+                    if !chessClockTimer.chessClockTimeUp {
+                        if roundFinished { animate() }
+                        else {update()}
+                        ChessClockTimerView(timeController: chessClockTimer)
+                    } else {
+                        Text("Finished!")
+                        Text("Survived for \(roundNum) rounds")
+                    }
                 }
             }
         }
@@ -402,20 +409,19 @@ struct ContentView: View {
     
     // ------------ chess clock mode functions ------------
     
-    // TODO for chess clock mode, in order of priority]
-    // 1. add different locks and lock progression
-    // 2. add more information in-game (time and round number)
-    // 3. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
-    // 4. add UserDefaults integration for highscores
-    // 5. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
-    // 6. add special locks (e.g. time freeze/slow, time bonus, etc)
+    // TODO for chess clock mode, in order of priority
+    // 1. add more information in-game (e.g. round number, progression indicators)
+    // 2. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
+    // 3. add UserDefaults integration for highscores
+    // 4. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
+    // 5. add special locks (e.g. time freeze/slow, time bonus, etc)
     
     func createSequence() {
         if Int.random(in: 1...3) == 1 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
-            gestures.append(Int.random(in: 1...4))
+            gestures.append(Int.random(in: 1...5))
         }
         var gestureViews: [AnyView] = []
         for id in gestures {
@@ -423,8 +429,8 @@ struct ContentView: View {
             switch id {
                 case 1: gestureViews.append(AnyView(TappableView(touches: 1, taps: 2, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2t "; break;
                 case 2: gestureViews.append(AnyView(TappableView(touches: 1, taps: 3, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3t "; break;
-                case 3: gestureViews.append(AnyView(RotatableView(rotatedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rot "; break;
-                case 4: gestureViews.append(AnyView(PinchableView(pinchedCallback: {(_, _) in advanceSequence()}))); sequenceText += "mag "; break;
+                case 3: gestureViews.append(AnyView(RotatableView(rotatedCallback: {(_, _) in print("rot registered"); advanceSequence()}))); sequenceText += "rot "; break;
+                case 4: gestureViews.append(AnyView(PinchableView(pinchedCallback: {(_, _) in print("mag registered"); advanceSequence()}))); sequenceText += "mag "; break;
                 case 5: gestureViews.append(AnyView(TappableView(touches: 2, taps: 1, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ft "; break;
                 case 6: gestureViews.append(AnyView(TappableView(touches: 3, taps: 1, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3ft "; break;
                 case 7: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "ls "; break;
@@ -452,6 +458,7 @@ struct ContentView: View {
     }
     
     func advanceSequence() {
+        print("before advance")
         if currentPosition == sequenceLength-1 {
             roundNum += 1
             sequenceText = ""
@@ -460,20 +467,22 @@ struct ContentView: View {
         else {
             self.currentPosition += 1
         }
+        print("inside fuction, after advance")
     }
     
     func update() -> some View {
+        print("before view update")
         let currGestureView = currentRound[currentPosition]
         let currGestureName = sequenceText.split(separator: " ")[currentPosition]
         print("displaying gesture \(currGestureName)")
         return AnyView(
             VStack {
                 Text(sequenceText)
-                Text(currGestureName)
+                Text(String(currentPosition) + " " + currGestureName)
                 ZStack {
-                    Image("G1L1F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                    Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
                 }
             }
         )
@@ -484,10 +493,12 @@ struct ContentView: View {
             VStack {
                 Text("a").foregroundColor(.white)
                 Text("b").foregroundColor(.white)
-                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: 1, lock: 1)
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: ccLockGroup, lock: ccLockNum)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
+                        ccLockNum = Int.random(in: 1...5)
+                        if [3, 8, 14, 21, 30, 37, 45, 56, 69].contains(roundNum) { ccLockGroup += 1 }
                         chessClockTime += 6.00
                         createSequence()
                         currentPosition = 0
@@ -503,7 +514,7 @@ struct ContentView: View {
     }
     
     struct ChessClockTimerView: View {
-        @State var timeLeft = 10.00
+        @State var timeLeft = 1000.00
         @ObservedObject var timeController: TimerProgress
         
         let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
@@ -515,8 +526,8 @@ struct ContentView: View {
         
         func advanceTime() {
             if chessClockTime != timeLeft { timeLeft = chessClockTime }
-            if timeLeft > 0 { timeLeft -= 0.01; chessClockTime -= 0.01 }
-            else { timeController.chessClockTimeUp = true }
+            if timeLeft > 0.01 { timeLeft -= 0.01; chessClockTime -= 0.01 }
+            else { chessClockOver = true; timeController.chessClockTimeUp = true }
         }
     }
     

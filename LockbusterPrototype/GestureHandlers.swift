@@ -21,6 +21,7 @@ struct TappableView: UIViewRepresentable {
     
     // main function that renders our view
     func makeUIView(context: UIViewRepresentableContext<TappableView>) -> UIView {
+        print("creating tap view")
         let v = UIView(frame: .zero)
         let gesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped))  // create our gesture
         gesture.numberOfTapsRequired = taps  // configure the gesture
@@ -34,7 +35,7 @@ struct TappableView: UIViewRepresentable {
         init(tappedCallback: @escaping ((CGPoint, Int) -> Void)) {
             self.tappedCallback = tappedCallback
         }
-        @objc func tapped(gesture:UITapGestureRecognizer) {
+        @objc func tapped(gesture: UITapGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
             self.tappedCallback(point, 1)
         }
@@ -45,7 +46,13 @@ struct TappableView: UIViewRepresentable {
     }
     
     // required for conformance to the UIViewRepresentable protocol but not needed here
-    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<TappableView>) { }
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<TappableView>) {
+        uiView.gestureRecognizers?.forEach(uiView.removeGestureRecognizer)
+        let gesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped))
+        gesture.numberOfTapsRequired = taps
+        gesture.numberOfTouchesRequired = touches
+        uiView.addGestureRecognizer(gesture)
+    }
     
 }
 
@@ -74,7 +81,7 @@ struct DraggableView: UIViewRepresentable {
         }
         @objc func dragged(gesture: UISwipeGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
-            self.draggedCallback(point, 1)
+            if gesture.state == .ended { self.draggedCallback(point, 1) }
         }
     }
     
@@ -82,7 +89,13 @@ struct DraggableView: UIViewRepresentable {
         return Coordinator(draggedCallback:self.draggedCallback)
     }
     
-    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<DraggableView>) { }
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<DraggableView>) {
+        uiView.gestureRecognizers?.forEach(uiView.removeGestureRecognizer)
+        let gesture = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.dragged))
+        gesture.numberOfTouchesRequired = touches
+        gesture.direction = direction
+        uiView.addGestureRecognizer(gesture)
+    }
 }
 
 /// LongPressableView: UIView wrapper that contains a UIKit Long Press Gesture Recognizer (much of the functionality has been ported to SwiftUI, but some is not fully present there yet)
@@ -107,7 +120,7 @@ struct LongPressableView: UIViewRepresentable {
         }
         @objc func pressed(gesture: UILongPressGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
-            self.pressedCallback(point, 1)
+            if gesture.state == .ended { self.pressedCallback(point, 1) }
         }
     }
     
@@ -115,7 +128,12 @@ struct LongPressableView: UIViewRepresentable {
         return Coordinator(pressedCallback: self.pressedCallback)
     }
     
-    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<LongPressableView>) { }
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<LongPressableView>) {
+        uiView.gestureRecognizers?.forEach(uiView.removeGestureRecognizer)
+        let gesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pressed))
+        gesture.numberOfTouchesRequired = touches
+        uiView.addGestureRecognizer(gesture)
+    }
 }
 
 /// PannableView: UIView wrapper that contains a UIKit Screen Edge Pan Gesture Recognizer (which has not at all been implemented into SwiftUI yet)
@@ -139,7 +157,7 @@ struct PannableView: UIViewRepresentable {
         }
         @objc func panned(gesture: UILongPressGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
-            self.pannedCallback(point, 1)
+            if gesture.state == .ended { self.pannedCallback(point, 1) }
         }
     }
     
@@ -147,7 +165,12 @@ struct PannableView: UIViewRepresentable {
         return Coordinator(pannedCallback: self.pannedCallback)
     }
     
-    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<PannableView>) { }
+    func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<PannableView>) {
+        uiView.gestureRecognizers?.forEach(uiView.removeGestureRecognizer)
+        let gesture = UIScreenEdgePanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.panned))
+        gesture.edges = edge
+        uiView.addGestureRecognizer(gesture)
+    }
 }
 
 struct RotatableView: UIViewRepresentable {
@@ -168,7 +191,7 @@ struct RotatableView: UIViewRepresentable {
         }
         @objc func rotated(gesture: UIRotationGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
-            self.rotatedCallback(point, 1)
+            if gesture.state == .ended { self.rotatedCallback(point, 1) }
         }
     }
     
@@ -197,7 +220,7 @@ struct PinchableView: UIViewRepresentable {
         }
         @objc func pinched(gesture: UIPinchGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
-            self.pinchedCallback(point, 1)
+            if gesture.state == .ended { self.pinchedCallback(point, 1) }
         }
     }
     
