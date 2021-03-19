@@ -113,10 +113,11 @@ var sequenceLength = 2
 var roundNum = 1
 var currentRound: [AnyView] = []
 var sequenceText = ""
-var chessClockTime = 1000.00
+var chessClockTime = 10.00
 var chessClockOver = false
 var ccLockGroup = 1
 var ccLockNum = 1
+var ccPrevBest = 0
 
 
 // --- main view ---
@@ -210,6 +211,12 @@ struct ContentView: View {
                     } else {
                         Text("Finished!")
                         Text("Survived for \(roundNum) rounds")
+                        if roundNum > ccPrevBest {
+                            Text("New Highscore!")
+                            Text("Improved by \(roundNum-ccPrevBest) rounds")
+                        } else {
+                            Text("Highscore: \(ccPrevBest)")
+                        }
                     }
                 }
             }
@@ -264,6 +271,7 @@ struct ContentView: View {
     }
     
     func startChessClock() {
+        ccPrevBest = UserDefaults.standard.integer(forKey: "chessClock")
         mode = .ChessClock
         createSequence()
         self.started = true
@@ -425,12 +433,11 @@ struct ContentView: View {
         }
         var gestureViews: [AnyView] = []
         for id in gestures {
-            print("gesture id: \(id)")
             switch id {
                 case 1: gestureViews.append(AnyView(TappableView(touches: 1, taps: 2, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2t "; break;
                 case 2: gestureViews.append(AnyView(TappableView(touches: 1, taps: 3, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3t "; break;
-                case 3: gestureViews.append(AnyView(RotatableView(rotatedCallback: {(_, _) in print("rot registered"); advanceSequence()}))); sequenceText += "rot "; break;
-                case 4: gestureViews.append(AnyView(PinchableView(pinchedCallback: {(_, _) in print("mag registered"); advanceSequence()}))); sequenceText += "mag "; break;
+                case 3: gestureViews.append(AnyView(RotatableView(rotatedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rot "; break;
+                case 4: gestureViews.append(AnyView(PinchableView(pinchedCallback: {(_, _) in advanceSequence()}))); sequenceText += "mag "; break;
                 case 5: gestureViews.append(AnyView(TappableView(touches: 2, taps: 1, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ft "; break;
                 case 6: gestureViews.append(AnyView(TappableView(touches: 3, taps: 1, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3ft "; break;
                 case 7: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "ls "; break;
@@ -458,7 +465,6 @@ struct ContentView: View {
     }
     
     func advanceSequence() {
-        print("before advance")
         if currentPosition == sequenceLength-1 {
             roundNum += 1
             sequenceText = ""
@@ -467,14 +473,11 @@ struct ContentView: View {
         else {
             self.currentPosition += 1
         }
-        print("inside fuction, after advance")
     }
     
     func update() -> some View {
-        print("before view update")
         let currGestureView = currentRound[currentPosition]
         let currGestureName = sequenceText.split(separator: " ")[currentPosition]
-        print("displaying gesture \(currGestureName)")
         return AnyView(
             VStack {
                 Text(sequenceText)
@@ -484,6 +487,7 @@ struct ContentView: View {
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
                 }
+                Text("Round \(roundNum)")
             }
         )
     }
@@ -505,6 +509,7 @@ struct ContentView: View {
                         roundFinished = false
                     })
                 })
+                Text("c").foregroundColor(.white)
             }
         )
     }
@@ -514,20 +519,20 @@ struct ContentView: View {
     }
     
     struct ChessClockTimerView: View {
-        @State var timeLeft = 1000.00
+        @State var timeLeft = 10.00
         @ObservedObject var timeController: TimerProgress
         
         let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
         
         var body: some View {
             Text(String(format: "%.2f seconds remaining", timeLeft))
-                .onReceive(timer, perform: { _ in advanceTime() }).padding(.top)
+                .onReceive(timer, perform: { _ in advanceTime() }).padding(.top).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/8, alignment: .center)
         }
         
         func advanceTime() {
             if chessClockTime != timeLeft { timeLeft = chessClockTime }
             if timeLeft > 0.01 { timeLeft -= 0.01; chessClockTime -= 0.01 }
-            else { chessClockOver = true; timeController.chessClockTimeUp = true }
+            else { chessClockOver = true; timeController.chessClockTimeUp = true; if roundNum > ccPrevBest {UserDefaults.standard.setValue(roundNum, forKey: "chessClock")} }
         }
     }
     
