@@ -418,11 +418,9 @@ struct ContentView: View {
     // ------------ chess clock mode functions ------------
     
     // TODO for chess clock mode, in order of priority
-    // 1. add more information in-game (e.g. round number, progression indicators)
-    // 2. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
-    // 3. add UserDefaults integration for highscores
-    // 4. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
-    // 5. add special locks (e.g. time freeze/slow, time bonus, etc)
+    // 1. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
+    // 2. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
+    // 3. add special locks (e.g. time freeze/slow, time bonus, etc)
     
     func createSequence() {
         if Int.random(in: 1...3) == 1 { sequenceLength += 1 }

@@ -21,7 +21,6 @@ struct TappableView: UIViewRepresentable {
     
     // main function that renders our view
     func makeUIView(context: UIViewRepresentableContext<TappableView>) -> UIView {
-        print("creating tap view")
         let v = UIView(frame: .zero)
         let gesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped))  // create our gesture
         gesture.numberOfTapsRequired = taps  // configure the gesture
