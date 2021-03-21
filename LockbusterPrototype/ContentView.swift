@@ -109,7 +109,7 @@ var timeSelection = 60.0  /// the Countdown Mode "category" that the user has se
 // both
 var startTime: TimeInterval = 0.0  /// the absolute time since the epoch at which the player starts the game
 // chess clock mode
-var sequenceLength = 2
+var sequenceLength = 3
 var roundNum = 1
 var currentRound: [AnyView] = []
 var sequenceText = ""
@@ -423,7 +423,7 @@ struct ContentView: View {
     // 3. add special locks (e.g. time freeze/slow, time bonus, etc)
     
     func createSequence() {
-        if Int.random(in: 1...3) == 1 { sequenceLength += 1 }
+        if Int.random(in: 1...4) == 1 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
@@ -475,11 +475,38 @@ struct ContentView: View {
     
     func update() -> some View {
         let currGestureView = currentRound[currentPosition]
-        let currGestureName = sequenceText.split(separator: " ")[currentPosition]
+        let gestureSequence = sequenceText.split(separator: " ")
+//        let currGestureName = gestureSequence[currentPosition]
         return AnyView(
             VStack {
-                Text(sequenceText)
-                Text(String(currentPosition) + " " + currGestureName)
+//                Text(sequenceText)
+//                Text(String(currentPosition) + " " + currGestureName)
+                HStack(spacing: 0) {
+                    GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
+                    GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
+                    GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
+                    if gestureSequence.count > 3 {
+                        GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
+                        if gestureSequence.count > 4 {
+                            GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
+                            if gestureSequence.count > 5 {
+                                GestureImageView(active: currentPosition == 5, name: gestureSequence[5])
+                                if gestureSequence.count > 6 {
+                                    GestureImageView(active: currentPosition == 6, name: gestureSequence[6])
+                                    if gestureSequence.count > 7 {
+                                        GestureImageView(active: currentPosition == 7, name: gestureSequence[7])
+                                        if gestureSequence.count > 8 {
+                                            GestureImageView(active: currentPosition == 8, name: gestureSequence[8])
+                                            if gestureSequence.count > 9 {
+                                                GestureImageView(active: currentPosition == 9, name: gestureSequence[9])
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }.offset(y: 45).zIndex(5)
                 ZStack {
                     Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
@@ -531,6 +558,16 @@ struct ContentView: View {
             if chessClockTime != timeLeft { timeLeft = chessClockTime }
             if timeLeft > 0.01 { timeLeft -= 0.01; chessClockTime -= 0.01 }
             else { chessClockOver = true; timeController.chessClockTimeUp = true; if roundNum > ccPrevBest {UserDefaults.standard.setValue(roundNum, forKey: "chessClock")} }
+        }
+    }
+    
+    struct GestureImageView: View {
+        var active: Bool
+        var name: Substring
+        
+        var body: some View {
+            if active { Image("A-\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5, height: UIScreen.main.bounds.width/5, alignment: .center) }
+            else { Image("\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5, height: UIScreen.main.bounds.width/5, alignment: .center) }
         }
     }
     
