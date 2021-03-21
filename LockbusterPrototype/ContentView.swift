@@ -109,7 +109,7 @@ var timeSelection = 60.0  /// the Countdown Mode "category" that the user has se
 // both
 var startTime: TimeInterval = 0.0  /// the absolute time since the epoch at which the player starts the game
 // chess clock mode
-var sequenceLength = 3
+var sequenceLength = 5
 var roundNum = 1
 var currentRound: [AnyView] = []
 var sequenceText = ""
@@ -481,37 +481,52 @@ struct ContentView: View {
             VStack {
 //                Text(sequenceText)
 //                Text(String(currentPosition) + " " + currGestureName)
-                HStack(spacing: 0) {
-                    GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
-                    GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
-                    GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
-                    if gestureSequence.count > 3 {
-                        GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
-                        if gestureSequence.count > 4 {
-                            GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
-                            if gestureSequence.count > 5 {
-                                GestureImageView(active: currentPosition == 5, name: gestureSequence[5])
-                                if gestureSequence.count > 6 {
-                                    GestureImageView(active: currentPosition == 6, name: gestureSequence[6])
-                                    if gestureSequence.count > 7 {
-                                        GestureImageView(active: currentPosition == 7, name: gestureSequence[7])
-                                        if gestureSequence.count > 8 {
-                                            GestureImageView(active: currentPosition == 8, name: gestureSequence[8])
-                                            if gestureSequence.count > 9 {
-                                                GestureImageView(active: currentPosition == 9, name: gestureSequence[9])
-                                            }
-                                        }
+                if gestureSequence.count < 6 {
+                    HStack(spacing: 0) {
+                        GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
+                        GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
+                        GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
+                        if gestureSequence.count > 3 {
+                            GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
+                            if gestureSequence.count > 4 {
+                                GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
+                            }
+                        }
+                    }.offset(y: 45).zIndex(5)
+                }
+                if gestureSequence.count > 5 {
+                    HStack(spacing: 0) {
+                        GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
+                        GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
+                        GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
+                        if gestureSequence.count > 3 {
+                            GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
+                            if gestureSequence.count > 4 {
+                                GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
+                            }
+                        }
+                    }.offset(y: 80).zIndex(5)
+                    HStack(spacing: 0) {
+                        GestureImageView(active: currentPosition == 5, name: gestureSequence[5])
+                        if gestureSequence.count > 6 {
+                            GestureImageView(active: currentPosition == 6, name: gestureSequence[6])
+                            if gestureSequence.count > 7 {
+                                GestureImageView(active: currentPosition == 7, name: gestureSequence[7])
+                                if gestureSequence.count > 8 {
+                                    GestureImageView(active: currentPosition == 8, name: gestureSequence[8])
+                                    if gestureSequence.count > 9 {
+                                        GestureImageView(active: currentPosition == 9, name: gestureSequence[9])
                                     }
                                 }
                             }
                         }
-                    }
-                }.offset(y: 45).zIndex(5)
+                    }.offset(y: 80).zIndex(5)
+                }
                 ZStack {
                     Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
-                }
+                }.offset(y: 30)
                 Text("Round \(roundNum)")
             }
         )
@@ -520,8 +535,8 @@ struct ContentView: View {
     func animate() -> some View {
         return AnyView(
             VStack {
-                Text("a").foregroundColor(.white)
-                Text("b").foregroundColor(.white)
+                GestureImageView(active: false, name: Substring("blank256")).offset(y: 45).zIndex(5)
+                if sequenceLength > 5 { GestureImageView(active: false, name: Substring("blank256")).offset(y: 45).zIndex(5) }
                 AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: ccLockGroup, lock: ccLockNum)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
@@ -533,7 +548,7 @@ struct ContentView: View {
                         currentPosition = 0
                         roundFinished = false
                     })
-                })
+                }).offset(y: 30)
                 Text("c").foregroundColor(.white)
             }
         )
