@@ -109,7 +109,7 @@ var timeSelection = 60.0  /// the Countdown Mode "category" that the user has se
 // both
 var startTime: TimeInterval = 0.0  /// the absolute time since the epoch at which the player starts the game
 // chess clock mode
-var sequenceLength = 5
+var sequenceLength = 3
 var roundNum = 1
 var currentRound: [AnyView] = []
 var sequenceText = ""
@@ -207,7 +207,8 @@ struct ContentView: View {
                     if !chessClockTimer.chessClockTimeUp {
                         if roundFinished { animate() }
                         else {update()}
-                        ChessClockTimerView(timeController: chessClockTimer)
+                        if sequenceLength < 6 { ChessClockTimerView(timeController: chessClockTimer) }
+                        else { ChessClockTimerView(timeController: chessClockTimer).offset(y: -45) }
                     } else {
                         Text("Finished!")
                         Text("Survived for \(roundNum) rounds")
@@ -423,7 +424,7 @@ struct ContentView: View {
     // 3. add special locks (e.g. time freeze/slow, time bonus, etc)
     
     func createSequence() {
-        if Int.random(in: 1...4) == 1 { sequenceLength += 1 }
+        if Int.random(in: 1...4) == 1 && sequenceLength <= 10 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
@@ -473,6 +474,7 @@ struct ContentView: View {
         }
     }
     
+    // TODO refactor this method to make it cleaner with an array of offsets
     func update() -> some View {
         let currGestureView = currentRound[currentPosition]
         let gestureSequence = sequenceText.split(separator: " ")
@@ -493,6 +495,12 @@ struct ContentView: View {
                             }
                         }
                     }.offset(y: 45).zIndex(5)
+                    ZStack {
+                        Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
+                    }.offset(y: 30)
+                    Text("Round \(roundNum)").offset(y: 10)
                 }
                 if gestureSequence.count > 5 {
                     HStack(spacing: 0) {
@@ -505,7 +513,7 @@ struct ContentView: View {
                                 GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
                             }
                         }
-                    }.offset(y: 80).zIndex(5)
+                    }.offset(y: 70).zIndex(5)
                     HStack(spacing: 0) {
                         GestureImageView(active: currentPosition == 5, name: gestureSequence[5])
                         if gestureSequence.count > 6 {
@@ -520,23 +528,26 @@ struct ContentView: View {
                                 }
                             }
                         }
-                    }.offset(y: 80).zIndex(5)
+                    }.offset(y: 70).zIndex(5)
+                    ZStack {
+                        Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
+                    }.offset(y: -5)
+                    Text("Round \(roundNum)").offset(y: -35)
                 }
-                ZStack {
-                    Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
-                }.offset(y: 30)
-                Text("Round \(roundNum)")
+                
             }
         )
     }
     
     func animate() -> some View {
+        var offsets: [CGFloat] = [70, -5, -35]
+        if sequenceLength < 6 { offsets = [45, 30, 10] }
         return AnyView(
             VStack {
-                GestureImageView(active: false, name: Substring("blank256")).offset(y: 45).zIndex(5)
-                if sequenceLength > 5 { GestureImageView(active: false, name: Substring("blank256")).offset(y: 45).zIndex(5) }
+                GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5)
+                if sequenceLength > 5 { GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5) }
                 AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: ccLockGroup, lock: ccLockNum)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
@@ -548,8 +559,8 @@ struct ContentView: View {
                         currentPosition = 0
                         roundFinished = false
                     })
-                }).offset(y: 30)
-                Text("c").foregroundColor(.white)
+                }).offset(y: offsets[1])
+                Text("c").foregroundColor(.white).offset(y: offsets[2])
             }
         )
     }
