@@ -134,7 +134,7 @@ struct ContentView: View {
     // ----- chess clock mode -----
     @State var roundFinished = false
     @State var currentPosition = 0
-    @StateObject var chessClockTimer = TimerProgress()
+    @ObservedObject var chessClockTimer = TimerProgress()
     
     /// contains all the visual elements that will be displayed at any point in the game
     var body: some View {
@@ -419,9 +419,9 @@ struct ContentView: View {
     // ------------ chess clock mode functions ------------
     
     // TODO for chess clock mode, in order of priority
-    // 1. once migrated to glyphs, switch this mode over to that and make the gestures "light up" in sequence as they are completed
-    // 2. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
-    // 3. add special locks (e.g. time freeze/slow, time bonus, etc)
+    // 1. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
+    // 2. add special locks (e.g. time freeze/slow, time bonus, etc)
+    // 3. take a design pass on glyphs (emphasize highlighting more, optimize space utilization)
     
     func createSequence() {
         if Int.random(in: 1...4) == 1 && sequenceLength <= 10 { sequenceLength += 1 }
@@ -443,19 +443,19 @@ struct ContentView: View {
                 case 8: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rs "; break;
                 case 9: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "us "; break;
                 case 10: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 1, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "ds "; break;
-                case 11: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ls "; break;
-                case 12: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2rs "; break;
-                case 13: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2us "; break;
-                case 14: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ds "; break;
+                case 11: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2fls "; break;
+                case 12: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2frs "; break;
+                case 13: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2fus "; break;
+                case 14: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 2, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2fds "; break;
                 case 15: gestureViews.append(AnyView(LongPressableView(touches: 1, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "lp "; break;
-                case 16: gestureViews.append(AnyView(LongPressableView(touches: 2, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2lp "; break;
-                case 17: gestureViews.append(AnyView(LongPressableView(touches: 3, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3lp "; break;
+                case 16: gestureViews.append(AnyView(LongPressableView(touches: 2, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2flp "; break;
+                case 17: gestureViews.append(AnyView(LongPressableView(touches: 3, pressedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3flp "; break;
                 case 18: gestureViews.append(AnyView(PannableView(edge: .left, pannedCallback: {(_, _) in advanceSequence()}))); sequenceText += "lep "; break;
                 case 19: gestureViews.append(AnyView(PannableView(edge: .right, pannedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rep "; break;
-                case 20: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3ls "; break;
-                case 21: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3rs "; break;
-                case 22: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3us "; break;
-                case 23: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3ds "; break;
+                case 20: gestureViews.append(AnyView(DraggableView(direction: .left, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fls "; break;
+                case 21: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3frs "; break;
+                case 22: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fus "; break;
+                case 23: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fds "; break;
                 default: break;
             }
         }
@@ -478,11 +478,8 @@ struct ContentView: View {
     func update() -> some View {
         let currGestureView = currentRound[currentPosition]
         let gestureSequence = sequenceText.split(separator: " ")
-//        let currGestureName = gestureSequence[currentPosition]
         return AnyView(
             VStack {
-//                Text(sequenceText)
-//                Text(String(currentPosition) + " " + currGestureName)
                 if gestureSequence.count < 6 {
                     HStack(spacing: 0) {
                         GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
