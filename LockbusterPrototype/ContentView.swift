@@ -421,10 +421,9 @@ struct ContentView: View {
     // TODO for chess clock mode, in order of priority
     // 1. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
     // 2. add special locks (e.g. time freeze/slow, time bonus, etc)
-    // 3. take a design pass on glyphs (emphasize highlighting more, optimize space utilization)
     
     func createSequence() {
-        if Int.random(in: 1...4) == 1 && sequenceLength <= 10 { sequenceLength += 1 }
+        if Int.random(in: 1...4) == 1 && sequenceLength < 10 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
@@ -481,7 +480,7 @@ struct ContentView: View {
         return AnyView(
             VStack {
                 if gestureSequence.count < 6 {
-                    HStack(spacing: 0) {
+                    HStack(spacing: 1) {
                         GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
                         GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
                         GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
@@ -500,7 +499,7 @@ struct ContentView: View {
                     Text("Round \(roundNum)").offset(y: 10)
                 }
                 if gestureSequence.count > 5 {
-                    HStack(spacing: 0) {
+                    HStack(spacing: 1) {
                         GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
                         GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
                         GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
@@ -511,7 +510,7 @@ struct ContentView: View {
                             }
                         }
                     }.offset(y: 70).zIndex(5)
-                    HStack(spacing: 0) {
+                    HStack(spacing: 1) {
                         GestureImageView(active: currentPosition == 5, name: gestureSequence[5])
                         if gestureSequence.count > 6 {
                             GestureImageView(active: currentPosition == 6, name: gestureSequence[6])
@@ -589,8 +588,8 @@ struct ContentView: View {
         var name: Substring
         
         var body: some View {
-            if active { Image("A-\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5, height: UIScreen.main.bounds.width/5, alignment: .center) }
-            else { Image("\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5, height: UIScreen.main.bounds.width/5, alignment: .center) }
+            if active { Image("A-\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5.25, height: UIScreen.main.bounds.width/5.25, alignment: .center) }
+            else { Image("\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5.25, height: UIScreen.main.bounds.width/5.25, alignment: .center) }
         }
     }
     
