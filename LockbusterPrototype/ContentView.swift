@@ -210,14 +210,14 @@ struct ContentView: View {
                         if sequenceLength < 6 { ChessClockTimerView(timeController: chessClockTimer) }
                         else { ChessClockTimerView(timeController: chessClockTimer).offset(y: -45) }
                     } else {
-                        Text("Finished!")
-                        Text("Survived for \(roundNum) rounds")
+                        Text("Finished!").animation(.easeInOut(duration: 1.5)).padding(.bottom).font(.system(size: 75, weight: .bold, design: .default))
+                        Text("Survived until round \(roundNum)").animation(.easeInOut(duration: 2.5)).padding(.top).font(.system(size: 33, weight: .semibold, design: .default))
                         if roundNum > ccPrevBest {
-                            Text("New Highscore!")
-                            Text("Improved by \(roundNum-ccPrevBest) rounds")
-                        } else {
-                            Text("Highscore: \(ccPrevBest)")
-                        }
+                            Text("New highscore!").padding(.top).font(.system(size: 26))
+                            Text("Improved by \(roundNum-ccPrevBest)").padding(.top)
+                        } else { Text("Highest round: \(ccPrevBest)").padding(.top) }
+                        
+                        Button("Back to Mode Select", action: {sequenceLength = 3; roundNum = 1; currentRound = []; sequenceText = ""; chessClockTime = 10.00; ccLockGroup = 1; chessClockTimer.chessClockTimeUp.toggle(); self.started = false}).padding(.top)
                     }
                 }
             }
