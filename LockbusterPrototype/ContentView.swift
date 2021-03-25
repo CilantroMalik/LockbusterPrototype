@@ -15,6 +15,12 @@ enum GameMode {
     case ChessClock
 }
 
+enum CCDifficulty {
+    case Standard
+    case Hard
+    case Expert
+}
+
 // --- auxiliary views ---
 /// AnimatedImage: stores an animated image composed of a number of individual frames (using UIImageView, which has this functionality built in)
 /// Essentially a UIView wrapped in UIViewRepresentable so it can be compatible with SwiftUI. Has a set duration and extracts the frames of animation from the assets.
@@ -118,6 +124,9 @@ var chessClockOver = false
 var ccLockGroup = 1
 var ccLockNum = 1
 var ccPrevBest = 0
+var difficulty: CCDifficulty = .Standard
+var increment = 6.00
+var rampingChance = 0.25
 
 
 // --- main view ---
@@ -164,7 +173,12 @@ struct ContentView: View {
                 }
                 
                 Text("— Chess Clock Mode —").padding(.top).padding(.bottom).font(.system(size: 27))
-                Button("Begin", action: { startChessClock() } ).font(.system(size: 20, weight: .bold, design: .rounded))
+                Text("Select a difficulty:").padding(.bottom)
+                HStack {
+                    Button("Standard", action: { difficulty = .Standard; startChessClock() } ).font(.system(size: 20, weight: .bold, design: .rounded)).padding(.trailing)
+                    Button("Hard", action: { difficulty = .Hard; startChessClock() } ).font(.system(size: 20, weight: .bold, design: .rounded)).padding(.leading).padding(.trailing)
+                    Button("Expert", action: { difficulty = .Expert; startChessClock() } ).font(.system(size: 20, weight: .bold, design: .rounded)).padding(.leading)
+                }
             } else {  // main game screen
                 if mode == .Speedrun {  // Speedrun Mode: slightly altered UI elements from Countdown, so has to be a separate set of code
                     if finalTime == "" {  // if the game is not over (this variable will take on a value once the target score is reached, so it serves as a proxy for a game over flag)
@@ -272,7 +286,11 @@ struct ContentView: View {
     }
     
     func startChessClock() {
-        ccPrevBest = UserDefaults.standard.integer(forKey: "chessClock")
+        switch difficulty {
+            case .Standard: increment = 6; rampingChance = 0.25; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockStandard"); break
+            case .Hard: increment = 5.5; rampingChance = 0.3; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockHard"); break
+            case .Expert: increment = 4.75; rampingChance = 0.37; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockExpert"); break
+        }
         mode = .ChessClock
         createSequence()
         self.started = true
@@ -423,7 +441,7 @@ struct ContentView: View {
     // 2. add special locks (e.g. time freeze/slow, time bonus, etc)
     
     func createSequence() {
-        if Int.random(in: 1...4) == 1 && sequenceLength < 10 { sequenceLength += 1 }
+        if Double.random(in: 0..<1) <= rampingChance && sequenceLength < 10 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
@@ -475,41 +493,24 @@ struct ContentView: View {
     
     // TODO refactor this method to make it cleaner with an array of offsets
     func update() -> some View {
+        var offsets: [CGFloat] = [70, -5, -35]
+        if sequenceLength < 6 { offsets = [45, 30, 10] }
         let currGestureView = currentRound[currentPosition]
         let gestureSequence = sequenceText.split(separator: " ")
         return AnyView(
             VStack {
-                if gestureSequence.count < 6 {
-                    HStack(spacing: 1) {
-                        GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
-                        GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
-                        GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
-                        if gestureSequence.count > 3 {
-                            GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
-                            if gestureSequence.count > 4 {
-                                GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
-                            }
+                HStack(spacing: 1) {
+                    GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
+                    GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
+                    GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
+                    if gestureSequence.count > 3 {
+                        GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
+                        if gestureSequence.count > 4 {
+                            GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
                         }
-                    }.offset(y: 45).zIndex(5)
-                    ZStack {
-                        Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
-                    }.offset(y: 30)
-                    Text("Round \(roundNum)").offset(y: 10)
-                }
+                    }
+                }.offset(y: offsets[0]).zIndex(5)
                 if gestureSequence.count > 5 {
-                    HStack(spacing: 1) {
-                        GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
-                        GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
-                        GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
-                        if gestureSequence.count > 3 {
-                            GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
-                            if gestureSequence.count > 4 {
-                                GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
-                            }
-                        }
-                    }.offset(y: 70).zIndex(5)
                     HStack(spacing: 1) {
                         GestureImageView(active: currentPosition == 5, name: gestureSequence[5])
                         if gestureSequence.count > 6 {
@@ -524,15 +525,14 @@ struct ContentView: View {
                                 }
                             }
                         }
-                    }.offset(y: 70).zIndex(5)
-                    ZStack {
-                        Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                        currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
-                    }.offset(y: -5)
-                    Text("Round \(roundNum)").offset(y: -35)
+                    }.offset(y: offsets[0]).zIndex(5)
                 }
-                
+                ZStack {
+                    Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
+                }.offset(y: offsets[1])
+                Text("Round \(roundNum)").offset(y: offsets[2])
             }
         )
     }
@@ -550,7 +550,7 @@ struct ContentView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
                         ccLockNum = Int.random(in: 1...5)
                         if [3, 8, 14, 21, 30, 37, 45, 56, 69].contains(roundNum) { ccLockGroup += 1 }
-                        chessClockTime += 6.00
+                        chessClockTime += increment
                         createSequence()
                         currentPosition = 0
                         roundFinished = false
@@ -579,7 +579,12 @@ struct ContentView: View {
         func advanceTime() {
             if chessClockTime != timeLeft { timeLeft = chessClockTime }
             if timeLeft > 0.01 { timeLeft -= 0.01; chessClockTime -= 0.01 }
-            else { chessClockOver = true; timeController.chessClockTimeUp = true; if roundNum > ccPrevBest {UserDefaults.standard.setValue(roundNum, forKey: "chessClock")} }
+            else { chessClockOver = true; timeController.chessClockTimeUp = true
+                if roundNum > ccPrevBest {
+                    UserDefaults.standard.setValue(roundNum, forKey: difficulty == .Standard ? "chessClockStandard" : (difficulty == .Hard ? "chessClockHard" : "chessClockExpert"))
+                    
+                }
+            }
         }
     }
     
