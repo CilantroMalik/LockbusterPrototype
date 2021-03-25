@@ -437,8 +437,8 @@ struct ContentView: View {
     // ------------ chess clock mode functions ------------
     
     // TODO for chess clock mode, in order of priority
-    // 1. add categories (e.g. smaller or larger time bonuses, faster ramping, etc)
-    // 2. add special locks (e.g. time freeze/slow, time bonus, etc)
+    // 1. add special locks (e.g. time freeze/slow, time bonus, etc)
+    // 2. add tooltips in menu screen to explain the modes & categories
     
     func createSequence() {
         if Double.random(in: 0..<1) <= rampingChance && sequenceLength < 10 { sequenceLength += 1 }
