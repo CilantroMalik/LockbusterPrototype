@@ -29,7 +29,7 @@ struct AnimatedImage: UIViewRepresentable {
     let imageSize: CGSize
     let group: Int
     let lock: Int
-    let duration: Double = 0.45
+    let duration: Double
 
     func makeUIView(context: Self.Context) -> UIView {
         let imageNames = (1...13).map { "G\(group)L\(lock)F\($0)" }  // use image name file format to generate from parameters
@@ -302,7 +302,7 @@ struct ContentView: View {
             VStack {
                 Text("a").foregroundColor(.white).font(.system(size: 35))  // same size as the gesture name text to make sure the lock is in the same place in the view for a seamless transition
                 // create an animated image with the same size as all our other lock images; set its group from the global variable (or one less if we have just crossed a threshold)
-                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: currentLock)
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: currentLock, duration: 0.45)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)  // same as static image
                 .onAppear(perform: {  // do not want to change state during view update, so we pass it off to onAppear
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {  // after the animation is completed...
@@ -481,6 +481,8 @@ struct ContentView: View {
     }
     
     func advanceSequence() {
+//        let impactMed = UIImpactFeedbackGenerator(style: .medium)
+//        impactMed.impactOccurred()
         if currentPosition == sequenceLength-1 {
             roundNum += 1
             sequenceText = ""
@@ -491,7 +493,6 @@ struct ContentView: View {
         }
     }
     
-    // TODO refactor this method to make it cleaner with an array of offsets
     func update() -> some View {
         var offsets: [CGFloat] = [70, -5, -35]
         if sequenceLength < 6 { offsets = [45, 30, 10] }
@@ -538,16 +539,19 @@ struct ContentView: View {
     }
     
     func animate() -> some View {
+        let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
+        impactHeavy.impactOccurred()
+        impactHeavy.impactOccurred()
         var offsets: [CGFloat] = [70, -5, -35]
         if sequenceLength < 6 { offsets = [45, 30, 10] }
         return AnyView(
             VStack {
                 GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5)
                 if sequenceLength > 5 { GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5) }
-                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: ccLockGroup, lock: ccLockNum)
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: ccLockGroup, lock: ccLockNum, duration: 0.4)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
-                    DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {
+                    DispatchQueue.main.asyncAfter(deadline: .now()+0.43, execute: {
                         ccLockNum = Int.random(in: 1...5)
                         if [3, 8, 14, 21, 30, 37, 45, 56, 69].contains(roundNum) { ccLockGroup += 1 }
                         chessClockTime += increment

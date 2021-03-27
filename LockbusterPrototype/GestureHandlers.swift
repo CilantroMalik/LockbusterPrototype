@@ -80,6 +80,7 @@ struct DraggableView: UIViewRepresentable {
         }
         @objc func dragged(gesture: UISwipeGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
+            if gesture.state == .began { let impactMed = UIImpactFeedbackGenerator(style: .medium); impactMed.impactOccurred() }
             if gesture.state == .ended { self.draggedCallback(point, 1) }
         }
     }
@@ -106,7 +107,7 @@ struct LongPressableView: UIViewRepresentable {
     func makeUIView(context: UIViewRepresentableContext<LongPressableView>) -> UIView {
         let v = UIView(frame: .zero)
         let gesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pressed))
-        gesture.minimumPressDuration = 0.4
+        gesture.minimumPressDuration = 0.25
         gesture.numberOfTouchesRequired = touches
         v.addGestureRecognizer(gesture)
         return v
@@ -119,6 +120,7 @@ struct LongPressableView: UIViewRepresentable {
         }
         @objc func pressed(gesture: UILongPressGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
+            if gesture.state == .began { let impactMed = UIImpactFeedbackGenerator(style: .medium); impactMed.impactOccurred() }
             if gesture.state == .ended { self.pressedCallback(point, 1) }
         }
     }
@@ -156,6 +158,7 @@ struct PannableView: UIViewRepresentable {
         }
         @objc func panned(gesture: UILongPressGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
+            if gesture.state == .began { let impactMed = UIImpactFeedbackGenerator(style: .medium); impactMed.impactOccurred() }
             if gesture.state == .ended { self.pannedCallback(point, 1) }
         }
     }
@@ -190,6 +193,7 @@ struct RotatableView: UIViewRepresentable {
         }
         @objc func rotated(gesture: UIRotationGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
+            if gesture.state == .began { let impactMed = UIImpactFeedbackGenerator(style: .medium); impactMed.impactOccurred() }
             if gesture.state == .ended { self.rotatedCallback(point, 1) }
         }
     }
@@ -219,6 +223,7 @@ struct PinchableView: UIViewRepresentable {
         }
         @objc func pinched(gesture: UIPinchGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
+            if gesture.state == .began { let impactMed = UIImpactFeedbackGenerator(style: .medium); impactMed.impactOccurred() }
             if gesture.state == .ended { self.pinchedCallback(point, 1) }
         }
     }
