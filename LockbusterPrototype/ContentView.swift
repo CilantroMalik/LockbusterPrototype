@@ -93,12 +93,6 @@ struct SpeedrunClockView: View {
     }
 }
 
-// =============================================
-// Backlog:
-// 1) begin prototyping for "chess clock" mode
-// 2) create pictographic glyphs for gestures to eliminate the need for text (possibly animated)
-// =============================================
-
 // --- game state variables ---
 var gestureName = ""  /// the name of the current gesture
 var score = 0  /// the player's current score
@@ -481,8 +475,6 @@ struct ContentView: View {
     }
     
     func advanceSequence() {
-//        let impactMed = UIImpactFeedbackGenerator(style: .medium)
-//        impactMed.impactOccurred()
         if currentPosition == sequenceLength-1 {
             roundNum += 1
             sequenceText = ""
