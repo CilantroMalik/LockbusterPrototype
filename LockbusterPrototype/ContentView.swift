@@ -121,6 +121,7 @@ var ccPrevBest = 0
 var difficulty: CCDifficulty = .Standard
 var increment = 6.00
 var rampingChance = 0.25
+var timeFrozen = false
 
 
 // --- main view ---
@@ -574,13 +575,8 @@ struct ContentView: View {
         
         func advanceTime() {
             if chessClockTime != timeLeft { timeLeft = chessClockTime }
-            if timeLeft > 0.01 { timeLeft -= 0.01; chessClockTime -= 0.01 }
-            else { chessClockOver = true; timeController.chessClockTimeUp = true
-                if roundNum > ccPrevBest {
-                    UserDefaults.standard.setValue(roundNum, forKey: difficulty == .Standard ? "chessClockStandard" : (difficulty == .Hard ? "chessClockHard" : "chessClockExpert"))
-                    
-                }
-            }
+            if timeLeft > 0.01 { if !timeFrozen { timeLeft -= 0.01; chessClockTime -= 0.01 } }
+            else { chessClockOver = true; timeController.chessClockTimeUp = true; if roundNum > ccPrevBest { UserDefaults.standard.setValue(roundNum, forKey: difficulty == .Standard ? "chessClockStandard" : (difficulty == .Hard ? "chessClockHard" : "chessClockExpert")) } }
         }
     }
     
