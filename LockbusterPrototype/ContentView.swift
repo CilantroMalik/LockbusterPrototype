@@ -121,8 +121,16 @@ var ccPrevBest = 0
 var difficulty: CCDifficulty = .Standard
 var increment = 6.00
 var rampingChance = 0.25
-var timeFrozen = false
-
+var isFrozen: Bool = false {
+    willSet {
+        print("setting isFrozen")
+    }
+    didSet {
+        print("new value \(isFrozen)")
+    }
+}
+var frozenDuration = 5.00
+var timeFrozen = 0.00
 
 // --- main view ---
 /// ContentView: the main game view that encapsulates the state and behavior of the game
@@ -440,13 +448,13 @@ struct ContentView: View {
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
-            gestures.append(Int.random(in: 1...5))
+            gestures.append(Int.random(in: 0...3))
         }
         var gestureViews: [AnyView] = []
         for id in gestures {
             switch id {
-                case 1: gestureViews.append(AnyView(TappableView(touches: 1, taps: 2, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2t "; break;
-                case 2: gestureViews.append(AnyView(TappableView(touches: 1, taps: 3, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3t "; break;
+                case 1: gestureViews.append(AnyView(TappableView(touches: 1, taps: 2, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "2t "; break;
+                case 2: gestureViews.append(AnyView(TappableView(touches: 1, taps: 3, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "3t "; break;
                 case 3: gestureViews.append(AnyView(RotatableView(rotatedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rot "; break;
                 case 4: gestureViews.append(AnyView(PinchableView(pinchedCallback: {(_, _) in advanceSequence()}))); sequenceText += "mag "; break;
                 case 5: gestureViews.append(AnyView(TappableView(touches: 2, taps: 1, tappedCallback: {(_, _) in advanceSequence()}))); sequenceText += "2ft "; break;
@@ -468,6 +476,7 @@ struct ContentView: View {
                 case 21: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3frs "; break;
                 case 22: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fus "; break;
                 case 23: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fds "; break;
+                case 0: gestureViews.append(AnyView(TappableView(touches: 1, taps: 5, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "frz "; break;
                 default: break;
             }
         }
@@ -476,6 +485,7 @@ struct ContentView: View {
     }
     
     func advanceSequence() {
+        print("frozen: \(isFrozen)")
         if currentPosition == sequenceLength-1 {
             roundNum += 1
             sequenceText = ""
@@ -484,6 +494,11 @@ struct ContentView: View {
         else {
             self.currentPosition += 1
         }
+    }
+    
+    func advanceFrozen(numTaps: Int) {
+        if numTaps == 5 { timeFrozen = 0.00; isFrozen = true }
+        advanceSequence()
     }
     
     func update() -> some View {
@@ -569,13 +584,18 @@ struct ContentView: View {
         let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
         
         var body: some View {
-            Text(String(format: "%.2f seconds remaining", timeLeft))
-                .onReceive(timer, perform: { _ in advanceTime() }).padding(.top).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/8, alignment: .center)
+            if isFrozen {
+                Text(String(format: "%.2f seconds remaining", timeLeft))
+                    .onReceive(timer, perform: { _ in advanceTime() }).padding(.top).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/8, alignment: .center).foregroundColor(.blue)
+            } else {
+                Text(String(format: "%.2f seconds remaining", timeLeft))
+                    .onReceive(timer, perform: { _ in advanceTime() }).padding(.top).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/8, alignment: .center)
+            }
         }
         
         func advanceTime() {
             if chessClockTime != timeLeft { timeLeft = chessClockTime }
-            if timeLeft > 0.01 { if !timeFrozen { timeLeft -= 0.01; chessClockTime -= 0.01 } }
+            if timeLeft > 0.01 { if !isFrozen { timeLeft -= 0.01; chessClockTime -= 0.01 } else { timeFrozen += 0.01; if timeFrozen >= frozenDuration { isFrozen = false } } }
             else { chessClockOver = true; timeController.chessClockTimeUp = true; if roundNum > ccPrevBest { UserDefaults.standard.setValue(roundNum, forKey: difficulty == .Standard ? "chessClockStandard" : (difficulty == .Hard ? "chessClockHard" : "chessClockExpert")) } }
         }
     }

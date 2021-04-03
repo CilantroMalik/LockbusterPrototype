@@ -36,7 +36,7 @@ struct TappableView: UIViewRepresentable {
         }
         @objc func tapped(gesture: UITapGestureRecognizer) {
             let point = gesture.location(in: gesture.view)
-            self.tappedCallback(point, 1)
+            self.tappedCallback(point, gesture.numberOfTapsRequired)
         }
     }
     
