@@ -290,9 +290,9 @@ struct ContentView: View {
     
     func startChessClock() {
         switch difficulty {
-            case .Standard: increment = 6; rampingChance = 0.25; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockStandard"); break
-            case .Hard: increment = 5.5; rampingChance = 0.3; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockHard"); break
-            case .Expert: increment = 4.75; rampingChance = 0.37; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockExpert"); break
+            case .Standard: increment = 6; rampingChance = 0.25; frozenDuration = 5.00; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockStandard"); break
+            case .Hard: increment = 5.5; rampingChance = 0.3; frozenDuration = 4.50; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockHard"); break
+            case .Expert: increment = 4.75; rampingChance = 0.37; frozenDuration = 3.75; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockExpert"); break
         }
         mode = .ChessClock
         createSequence()
