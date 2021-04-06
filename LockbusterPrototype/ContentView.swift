@@ -537,8 +537,13 @@ struct ContentView: View {
                     }.offset(y: offsets[0]).zIndex(5)
                 }
                 ZStack {
-                    Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    if gestureSequence[currentPosition].contains("frz") {
+                        Image("G11L1F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    } else {
+                        Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                    }
                     currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
                 }.offset(y: offsets[1])
                 Text("Round \(roundNum)").offset(y: offsets[2])
