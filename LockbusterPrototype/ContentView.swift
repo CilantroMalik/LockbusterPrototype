@@ -131,6 +131,7 @@ var isFrozen: Bool = false {
 }
 var frozenDuration = 5.00
 var timeFrozen = 0.00
+var isFreezeRound = false
 
 // --- main view ---
 /// ContentView: the main game view that encapsulates the state and behavior of the game
@@ -444,11 +445,20 @@ struct ContentView: View {
     // 2. add tooltips in menu screen to explain the modes & categories
     
     func createSequence() {
+        print("creating sequence")
+        if Int.random(in: 1...2) == 1 {
+            print("freeze round")
+            currentRound = [AnyView(TappableView(touches: 1, taps: 5, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))]
+            sequenceText = "frz"
+            isFreezeRound = true
+            return
+        }
+        
         if Double.random(in: 0..<1) <= rampingChance && sequenceLength < 10 { sequenceLength += 1 }
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
-            gestures.append(Int.random(in: 0...3))
+            gestures.append(Int.random(in: 1...3))
         }
         var gestureViews: [AnyView] = []
         for id in gestures {
@@ -476,7 +486,7 @@ struct ContentView: View {
                 case 21: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3frs "; break;
                 case 22: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fus "; break;
                 case 23: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fds "; break;
-                case 0: gestureViews.append(AnyView(TappableView(touches: 1, taps: 5, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "frz "; break;
+                //case 0: gestureViews.append(AnyView(TappableView(touches: 1, taps: 5, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "frz "; break;
                 default: break;
             }
         }
@@ -485,7 +495,11 @@ struct ContentView: View {
     }
     
     func advanceSequence() {
-        print("frozen: \(isFrozen)")
+        if isFreezeRound {
+            print("advancing freeze round")
+            roundFinished = true
+            return
+        }
         if currentPosition == sequenceLength-1 {
             roundNum += 1
             sequenceText = ""
@@ -510,12 +524,16 @@ struct ContentView: View {
             VStack {
                 HStack(spacing: 1) {
                     GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
-                    GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
-                    GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
-                    if gestureSequence.count > 3 {
-                        GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
-                        if gestureSequence.count > 4 {
-                            GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
+                    if gestureSequence.count > 1 {
+                        GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
+                        if gestureSequence.count > 2 {
+                            GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
+                            if gestureSequence.count > 3 {
+                                GestureImageView(active: currentPosition == 3, name: gestureSequence[3])
+                                if gestureSequence.count > 4 {
+                                    GestureImageView(active: currentPosition == 4, name: gestureSequence[4])
+                                }
+                            }
                         }
                     }
                 }.offset(y: offsets[0]).zIndex(5)
@@ -537,13 +555,8 @@ struct ContentView: View {
                     }.offset(y: offsets[0]).zIndex(5)
                 }
                 ZStack {
-                    if gestureSequence[currentPosition].contains("frz") {
-                        Image("G11L1F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    } else {
-                        Image("G\(ccLockGroup)L\(ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    }
+                    Image("G\(sequenceText.contains("frz") ? 11 : ccLockGroup)L\(sequenceText.contains("frz") ? 1 : ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
                     currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
                 }.offset(y: offsets[1])
                 Text("Round \(roundNum)").offset(y: offsets[2])
@@ -561,10 +574,13 @@ struct ContentView: View {
             VStack {
                 GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5)
                 if sequenceLength > 5 { GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5) }
-                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: ccLockGroup, lock: ccLockNum, duration: 0.4)
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: sequenceText.contains("frz") ? 11 : ccLockGroup, lock: sequenceText.contains("frz") ? 1 : ccLockNum, duration: 0.4)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
                 .onAppear(perform: {
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.43, execute: {
+                        print("animation dispatch")
+                        sequenceText = ""
+                        isFreezeRound = false
                         ccLockNum = Int.random(in: 1...5)
                         if [3, 8, 14, 21, 30, 37, 45, 56, 69].contains(roundNum) { ccLockGroup += 1 }
                         chessClockTime += increment
