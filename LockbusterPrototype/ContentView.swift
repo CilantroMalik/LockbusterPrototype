@@ -445,9 +445,7 @@ struct ContentView: View {
     // 2. add tooltips in menu screen to explain the modes & categories
     
     func createSequence() {
-        print("creating sequence")
         if Int.random(in: 1...2) == 1 {
-            print("freeze round")
             currentRound = [AnyView(TappableView(touches: 1, taps: 5, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))]
             sequenceText = "frz"
             isFreezeRound = true
@@ -486,7 +484,6 @@ struct ContentView: View {
                 case 21: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3frs "; break;
                 case 22: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fus "; break;
                 case 23: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fds "; break;
-                //case 0: gestureViews.append(AnyView(TappableView(touches: 1, taps: 5, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "frz "; break;
                 default: break;
             }
         }
@@ -496,7 +493,6 @@ struct ContentView: View {
     
     func advanceSequence() {
         if isFreezeRound {
-            print("advancing freeze round")
             roundFinished = true
             return
         }
