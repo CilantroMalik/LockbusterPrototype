@@ -76,7 +76,7 @@ struct CountdownTimerView: View {
     var body: some View {
         Text(String(format: "%.2f seconds remaining", timeLeft))
             .onReceive(timer, perform: { _ in
-                if timeLeft > 0 { timeLeft -= 0.01 }
+                if timeLeft > 0 && !isFrozen { timeLeft -= 0.01 }
             }).padding(.top)
     }
 }
@@ -306,7 +306,7 @@ struct ContentView: View {
             VStack {
                 Text("a").foregroundColor(.white).font(.system(size: 35))  // same size as the gesture name text to make sure the lock is in the same place in the view for a seamless transition
                 // create an animated image with the same size as all our other lock images; set its group from the global variable (or one less if we have just crossed a threshold)
-                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: currentLock, duration: 0.45)
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: gestureName == "Freeze Lock!" ? 11 : (upgrades.contains(score) ? lockGroup-1 : lockGroup), lock: gestureName == "Freeze Lock!" ? 1 : currentLock, duration: 0.45)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)  // same as static image
                 .onAppear(perform: {  // do not want to change state during view update, so we pass it off to onAppear
                     DispatchQueue.main.asyncAfter(deadline: .now()+0.5, execute: {  // after the animation is completed...
@@ -329,6 +329,18 @@ struct ContentView: View {
     // function that chooses a lock and returns a view containing that lock along with all necessary gesture recognizers and text
     func createLock() -> some View {
         let num = Int.random(in: 1...2)  // select a random gesture
+        if mode == .Countdown && Int.random(in: 1...2) == 1 {
+            gestureName = "Freeze Lock!"
+            startTime += 5.00
+            return AnyView(
+                VStack {
+                    Text(gestureName).font(.system(size: 35))
+                    Image("G11L1F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                        .gesture(TapGesture(count: 5).onEnded{ isFrozen = true; DispatchQueue.main.asyncAfter(deadline: .now()+5, execute: {isFrozen = false}); gestureDone() })
+                }
+            )
+        }
         // for double/triple tap, pinch, and rotate, use vanilla SwiftUI gestures; when a gesture is completed, we call a small helper function (to avoid too much repetition)
         if num == 1 {
             gestureName = "Double Tap"
