@@ -121,14 +121,7 @@ var ccPrevBest = 0
 var difficulty: CCDifficulty = .Standard
 var increment = 6.00
 var rampingChance = 0.25
-var isFrozen: Bool = false {
-    willSet {
-        print("setting isFrozen")
-    }
-    didSet {
-        print("new value \(isFrozen)")
-    }
-}
+var isFrozen: Bool = false
 var frozenDuration = 5.00
 var timeFrozen = 0.00
 var isFreezeRound = false
