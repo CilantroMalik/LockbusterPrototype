@@ -521,16 +521,17 @@ struct ContentView: View {
         advanceSequence()  // if not, just proceed as normal with other tasks
     }
     
+    // function that handles updating of the view with the currently displaying lock and gesture sequence
     func update() -> some View {
-        var offsets: [CGFloat] = [70, -5, -35]
-        if sequenceLength < 6 { offsets = [45, 30, 10] }
-        let currGestureView = currentRound[currentPosition]
-        let gestureSequence = sequenceText.split(separator: " ")
+        var offsets: [CGFloat] = [70, -5, -35]  // position offsets for the UI elements
+        if sequenceLength < 6 { offsets = [45, 30, 10] }  // will change if there are only one row of gestures (5 or less)
+        let currGestureView = currentRound[currentPosition]  // get the gesture that should currently be active
+        let gestureSequence = sequenceText.split(separator: " ")  // split the sequence text that we built up while creating a sequence into its individual gesture codes
         return AnyView(
-            VStack {
-                HStack(spacing: 1) {
-                    GestureImageView(active: currentPosition == 0, name: gestureSequence[0])
-                    if gestureSequence.count > 1 {
+            VStack {  // vertically align all the UI elements
+                HStack(spacing: 1) {  // first row of gestures
+                    GestureImageView(active: currentPosition == 0, name: gestureSequence[0])  // check if the current position equals each gesture's position, and if so, make it active (blue)
+                    if gestureSequence.count > 1 {  // for every successive gesture, check if we should even display that gesture, based on the sequence length
                         GestureImageView(active: currentPosition == 1, name: gestureSequence[1])
                         if gestureSequence.count > 2 {
                             GestureImageView(active: currentPosition == 2, name: gestureSequence[2])
@@ -542,8 +543,8 @@ struct ContentView: View {
                             }
                         }
                     }
-                }.offset(y: offsets[0]).zIndex(5)
-                if gestureSequence.count > 5 {
+                }.offset(y: offsets[0]).zIndex(5)  // offset by the specified amount and make sure the gestures display highest on the Z-axis so they do not get overlapped
+                if gestureSequence.count > 5 {  // if there is a second row of gestures, just make the same HStack but now for gestures 6-10
                     HStack(spacing: 1) {
                         GestureImageView(active: currentPosition == 5, name: gestureSequence[5])
                         if gestureSequence.count > 6 {
@@ -560,79 +561,89 @@ struct ContentView: View {
                         }
                     }.offset(y: offsets[0]).zIndex(5)
                 }
-                ZStack {
+                ZStack {  // show the lock image itself
+                    // for every image, show group 11 lock 1 for freeze otherwise the current group and lock from the global variables. set aspect ratio so it looks normal on the screen
                     Image("G\(sequenceText.contains("frz") ? 11 : ccLockGroup)L\(sequenceText.contains("frz") ? 1 : ccLockNum)F1").resizable().aspectRatio(contentMode: .fill).scaleEffect(0.95)
                         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
-                    currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).foregroundColor(.red)
-                }.offset(y: offsets[1])
-                Text("Round \(roundNum)").offset(y: offsets[2])
+                    // show the gesture view in the exact same place as the image, with the same resizing parameters and frame
+                    currGestureView.aspectRatio(contentMode: .fill).scaleEffect(0.95).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center)
+                }.offset(y: offsets[1])  // offset this by the second of the specified offsets
+                Text("Round \(roundNum)").offset(y: offsets[2])  // finally, display the round number and offset it by the last value in the offsets array
             }
         )
     }
     
+    // function that handles the animation of a lock once a gesture sequence is complete, and the creation of a new round and new lock
     func animate() -> some View {
-        let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
+        let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)  // give haptic feedback upon completing a round
         impactHeavy.impactOccurred()
         impactHeavy.impactOccurred()
-        var offsets: [CGFloat] = [70, -5, -35]
+        var offsets: [CGFloat] = [70, -5, -35]  // exact same offset scheme as above to create a seamless switching between views
         if sequenceLength < 6 { offsets = [45, 30, 10] }
         return AnyView(
-            VStack {
-                GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5)
-                if sequenceLength > 5 { GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5) }
-                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: sequenceText.contains("frz") ? 11 : ccLockGroup, lock: sequenceText.contains("frz") ? 1 : ccLockNum, duration: 0.4)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)
-                .onAppear(perform: {
-                    DispatchQueue.main.asyncAfter(deadline: .now()+0.43, execute: {
-                        print("animation dispatch")
-                        sequenceText = ""
-                        isFreezeRound = false
-                        ccLockNum = Int.random(in: 1...5)
-                        if [3, 8, 14, 21, 30, 37, 45, 56, 69].contains(roundNum) { ccLockGroup += 1 }
-                        chessClockTime += increment
-                        createSequence()
-                        currentPosition = 0
-                        roundFinished = false
+            VStack {  // same layout but with many placeholders
+                GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5)  // put a dummy gesture view to stand in place of the first row of gestures
+                if sequenceLength > 5 { GestureImageView(active: false, name: Substring("blank256")).offset(y: offsets[0]).zIndex(5) }  // if the second row of gestures exists, draw another one
+                AnimatedImage(imageSize: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5), group: sequenceText.contains("frz") ? 11 : ccLockGroup, lock: sequenceText.contains("frz") ? 1 : ccLockNum, duration: 0.4)  // draw the animated lock with the same lock group and number as the one that was just on the screen
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/1.5, alignment: .center).aspectRatio(contentMode: .fill).scaleEffect(0.95)  // same layout as well
+                .onAppear(perform: {  // we do all the state updating in onAppear so the view does not update state while refreshing itself
+                    DispatchQueue.main.asyncAfter(deadline: .now()+0.43, execute: {  // slight delay after the animation is complete
+                        sequenceText = ""  // reset sequence text
+                        isFreezeRound = false  // reset this flag in case it was changed
+                        ccLockNum = Int.random(in: 1...5)  // choose a random new lock
+                        if [3, 8, 14, 21, 30, 37, 45, 56, 69].contains(roundNum) { ccLockGroup += 1 }  // if we have reached one of the upgrade points, increase the lock group as well
+                        chessClockTime += increment  // add the specified increment to the timer since the round is done
+                        createSequence()  // begin the creation of a new round
+                        currentPosition = 0  // reset the position to the first gesture for the new round
+                        self.roundFinished = false  // finally, mark the relevant flag; this triggers a view update that will reflect all the new changes
                     })
-                }).offset(y: offsets[1])
-                Text("c").foregroundColor(.white).offset(y: offsets[2])
+                }).offset(y: offsets[1])  // use the relevant offset
+                Text("c").foregroundColor(.white).offset(y: offsets[2])  // same as before, make placeholder text with the same offset as in the update() view to preserve layout consistency
             }
         )
     }
     
+    /// TimerProgress: class that keeps track of when the chess clock timer has run out
     class TimerProgress: ObservableObject {
         @Published var chessClockTimeUp = false
     }
     
+    /// ChessClockTimerView: struct that defines a view that holds the timer for chess clock mode
     struct ChessClockTimerView: View {
-        @State var timeLeft = 10.00
-        @ObservedObject var timeController: TimerProgress
+        @State var timeLeft = 10.00  /// Stores how much time is left on the clock
+        @ObservedObject var timeController: TimerProgress  /// Stores a TimerProgress instance that prescribes when the time is up
         
-        let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
+        let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()  // every 0.01s, update the timer
         
         var body: some View {
-            if isFrozen {
+            if isFrozen {  // for a freeze lock, we want to show the time in blue to give a visual cue that the clock is frozen
                 Text(String(format: "%.2f seconds remaining", timeLeft))
                     .onReceive(timer, perform: { _ in advanceTime() }).padding(.top).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/8, alignment: .center).foregroundColor(.blue)
-            } else {
+            } else {  // for normal lock, just display the text normally, and when we receive an event from the timer, advance the time
                 Text(String(format: "%.2f seconds remaining", timeLeft))
                     .onReceive(timer, perform: { _ in advanceTime() }).padding(.top).frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/8, alignment: .center)
             }
         }
         
+        // function that handles tasks to advance the timer
         func advanceTime() {
-            if chessClockTime != timeLeft { timeLeft = chessClockTime }
+            if chessClockTime != timeLeft { timeLeft = chessClockTime }  // if the times get out of sync (this happens after an increment) correct this struct's internal variable with the global variable's value
+            // if there is time left, decrement the timer (both the instance and global variables); if we are frozen, increment the time frozen and if we are done with the frozen period, set the flag as such and resume decrementing the timer as normal
             if timeLeft > 0.01 { if !isFrozen { timeLeft -= 0.01; chessClockTime -= 0.01 } else { timeFrozen += 0.01; if timeFrozen >= frozenDuration { isFrozen = false } } }
+            // if time is up, set the relevant flags (the TimerProgress instance will publish the change to the view and trigger an update) and then handle highscore setting for the appropriate difficulty if a highscore was achieved
             else { chessClockOver = true; timeController.chessClockTimeUp = true; if roundNum > ccPrevBest { UserDefaults.standard.setValue(roundNum, forKey: difficulty == .Standard ? "chessClockStandard" : (difficulty == .Hard ? "chessClockHard" : "chessClockExpert")) } }
         }
     }
     
+    /// GestureImageView: struct that defines a view that holds a gesture glyph
     struct GestureImageView: View {
-        var active: Bool
-        var name: Substring
+        var active: Bool  /// is this glyph currently active?
+        var name: Substring  /// the short name for this glyph; will be spliced from sequenceText so it is stored as a Substring to avoid having to make a type conversion
         
         var body: some View {
+            // if the glyph is active, pick the active version of the glyph corresponding to the gesture codename and align it in all the standard ways
             if active { Image("A-\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5.25, height: UIScreen.main.bounds.width/5.25, alignment: .center) }
+            // if it is not active, do the same thing but instead choose the non-active version
             else { Image("\(name)").resizable().aspectRatio(contentMode: .fill).frame(width: UIScreen.main.bounds.width/5.25, height: UIScreen.main.bounds.width/5.25, alignment: .center) }
         }
     }
