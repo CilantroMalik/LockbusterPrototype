@@ -282,15 +282,17 @@ struct ContentView: View {
         self.started = true  // finally, after the setup, start the game
     }
     
+    // function that handles game start tasks for Chess Clock Mode
     func startChessClock() {
-        switch difficulty {
+        switch difficulty {  // change various game parameters according to difficulty setting: currently, time gained upon completing a lock, chance of increasing gesture count per lock, and duration of freeze lock
+            // also retrieve the relevant highscore from disk
             case .Standard: increment = 6; rampingChance = 0.25; frozenDuration = 5.00; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockStandard"); break
             case .Hard: increment = 5.5; rampingChance = 0.3; frozenDuration = 4.50; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockHard"); break
             case .Expert: increment = 4.75; rampingChance = 0.37; frozenDuration = 3.75; ccPrevBest = UserDefaults.standard.integer(forKey: "chessClockExpert"); break
         }
-        mode = .ChessClock
-        createSequence()
-        self.started = true
+        mode = .ChessClock  // set the game mode
+        createSequence()  // create the first gesture sequence and initialize the list of gestures in preparation for starting the game
+        self.started = true  // trigger the game to start and the view to refresh
     }
     
     // function that handles the animation of each lock after a gesture is completed and continues the game flow
@@ -446,26 +448,27 @@ struct ContentView: View {
     // ------------ chess clock mode functions ------------
     
     // TODO for chess clock mode, in order of priority
-    // 1. add special locks (e.g. time freeze/slow, time bonus, etc)
-    // 2. add tooltips in menu screen to explain the modes & categories
+    // 1. add tooltips in menu screen to explain the modes & categories
     
+    // function that chooses a sequence of gestures for one round of chess clock mode and adds the relevant gesture views to a central array
     func createSequence() {
-        if Int.random(in: 1...2) == 1 {
+        if Int.random(in: 1...2) == 1 {  // if some random chance is hit, override the current round with a single freeze lock
             currentRound = [AnyView(TappableView(touches: 1, taps: 5, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))]
-            sequenceText = "frz"
-            isFreezeRound = true
-            return
+            sequenceText = "frz"  // reflect this in the sequence text
+            isFreezeRound = true  // set the relevant flag
+            return  // we do not want to go through the normal round creation process
         }
         
-        if Double.random(in: 0..<1) <= rampingChance && sequenceLength < 10 { sequenceLength += 1 }
+        if Double.random(in: 0..<1) <= rampingChance && sequenceLength < 10 { sequenceLength += 1 }  // roll a random chance for the predetermined probability and if it hits, increase the round length
         
         var gestures: [Int] = []
         for _ in 1...sequenceLength {
-            gestures.append(Int.random(in: 1...3))
+            gestures.append(Int.random(in: 1...3))  // create an array of random numbers in the range of the number of gestures, which will be used to select the gestures
         }
         var gestureViews: [AnyView] = []
         for id in gestures {
-            switch id {
+            switch id {  // large switch statement that appends the relevant gesture for each randomly selected number
+                // each gesture calls the relevant callback function and adds to the sequence text which will eventually be used to generate the glyphs
                 case 1: gestureViews.append(AnyView(TappableView(touches: 1, taps: 2, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "2t "; break;
                 case 2: gestureViews.append(AnyView(TappableView(touches: 1, taps: 3, tappedCallback: {(_, taps) in advanceFrozen(numTaps: taps)}))); sequenceText += "3t "; break;
                 case 3: gestureViews.append(AnyView(RotatableView(rotatedCallback: {(_, _) in advanceSequence()}))); sequenceText += "rot "; break;
@@ -489,31 +492,33 @@ struct ContentView: View {
                 case 21: gestureViews.append(AnyView(DraggableView(direction: .right, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3frs "; break;
                 case 22: gestureViews.append(AnyView(DraggableView(direction: .up, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fus "; break;
                 case 23: gestureViews.append(AnyView(DraggableView(direction: .down, touches: 3, draggedCallback: {(_, _) in advanceSequence()}))); sequenceText += "3fds "; break;
-                default: break;
+                default: break;  // will never occur
             }
         }
-        currentRound = gestureViews
-        sequenceText.removeLast()
+        currentRound = gestureViews  // set the global variable so other areas of the program can access it
+        sequenceText.removeLast()  // remove trailing space from sequence text
     }
     
+    // function that handles tasks to be done in betwen gestures in a single sequence; used as the callback for the gesture handlers
     func advanceSequence() {
-        if isFreezeRound {
+        if isFreezeRound {  // if this is a freeze lock, the round length is 1 no matter what the sequenceLength variable says, so just end the round now
             roundFinished = true
             return
         }
-        if currentPosition == sequenceLength-1 {
-            roundNum += 1
-            sequenceText = ""
-            self.roundFinished = true
+        if currentPosition == sequenceLength-1 {  // if we have reached the end of a normal round, move onto the next one
+            roundNum += 1  // increment the round counter
+            sequenceText = ""  // clear the gesture sequence
+            self.roundFinished = true  // and set the flag that will trigger a view refresh and thereby a new call to createSequence()
         }
         else {
-            self.currentPosition += 1
+            self.currentPosition += 1  // if it isn't the end of a round, just advance the current position (this triggers a view update as well to show the next gesture)
         }
     }
     
+    // function that acts as a callback for the tap gestures only and is a wrapper to the above
     func advanceFrozen(numTaps: Int) {
-        if numTaps == 5 { timeFrozen = 0.00; isFrozen = true }
-        advanceSequence()
+        if numTaps == 5 { timeFrozen = 0.00; isFrozen = true }  // for tap gestures, we need to do an additional check to see if it was a freeze lock, and if so we activate the "frozen" state
+        advanceSequence()  // if not, just proceed as normal with other tasks
     }
     
     func update() -> some View {
