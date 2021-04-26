@@ -175,6 +175,7 @@ struct PannableView: UIViewRepresentable {
     }
 }
 
+/// RotatableView: UIView wrapper that contains a UIKit Rotation Gesture Recognizer
 struct RotatableView: UIViewRepresentable {
     var rotatedCallback: ((CGPoint, Int) -> Void)  // what to do when the rotation is registered
     
@@ -205,6 +206,7 @@ struct RotatableView: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: UIViewRepresentableContext<RotatableView>) { }
 }
 
+/// PinchableView: UIView wrapper that contains a UIKit Pinch Gesture Recognizer
 struct PinchableView: UIViewRepresentable {
     var pinchedCallback: ((CGPoint, Int) -> Void)  // what to do when the pinch is registered
     

@@ -109,22 +109,22 @@ var timeSelection = 60.0  /// the Countdown Mode "category" that the user has se
 // both
 var startTime: TimeInterval = 0.0  /// the absolute time since the epoch at which the player starts the game
 // chess clock mode
-var sequenceLength = 3
-var roundNum = 1
-var currentRound: [AnyView] = []
-var sequenceText = ""
-var chessClockTime = 10.00
-var chessClockOver = false
-var ccLockGroup = 1
-var ccLockNum = 1
-var ccPrevBest = 0
-var difficulty: CCDifficulty = .Standard
-var increment = 6.00
-var rampingChance = 0.25
-var isFrozen: Bool = false
-var frozenDuration = 5.00
-var timeFrozen = 0.00
-var isFreezeRound = false
+var sequenceLength = 3  /// the current round length (number of gestures per round)
+var roundNum = 1  /// the round number
+var currentRound: [AnyView] = []  /// list of gesture views for the current round
+var sequenceText = ""  /// text of short gesture codes for the current round
+var chessClockTime = 10.00  /// timer for chess clock mode
+var chessClockOver = false  /// flag that marks whether the game is over
+var ccLockGroup = 1  /// the current lock group
+var ccLockNum = 1  /// the current lock number
+var ccPrevBest = 0  /// the previous highscore in whichever mode the user has selected; will be populated on game start
+var difficulty: CCDifficulty = .Standard  /// the difficulty the user selects for the game
+var increment = 6.00  /// the amount of time gained upon successful completion of each round
+var rampingChance = 0.25  /// the chance after any given round that the sequence length will increase, up to a max of 10
+var isFrozen: Bool = false  /// flag that marks whether the timer is currently frozen
+var frozenDuration = 5.00  /// the maximum duration that the timer can be frozen (changes with difficulty)
+var timeFrozen = 0.00  /// the amount of time that the timer has been frozen so far
+var isFreezeRound = false  /// flag that marks whether the current round is a freeze lock or a normal round
 
 // --- main view ---
 /// ContentView: the main game view that encapsulates the state and behavior of the game
